@@ -301,6 +301,20 @@ babashka-install: $(babashka_package) pre_install
 	mkdir -p $(babashka_bindir)
 	case "$<" in *.zip) $(unzip) $< -d $(babashka_bindir);; *.tar.*) $(untar) $< -C $(babashka_bindir);; esac
 
+# Emacs https://www.gnu.org/software/emacs/download.html
+apps += emacs
+emacs_version := 30.1
+emacs_package := emacs-$(emacs_version).zip
+
+emacs: $(emacs_package)
+$(emacs_package):
+	wget -c -O $@.swp https://ftp.gnu.org/gnu/emacs/windows/emacs-$(firstword $(subst ., ,$(emacs_version)))/${emacs_package}
+	mv -f $@.swp $@
+
+apps += emacs-install
+emacs-install: $(emacs_package)
+	unzip $< -d $(DESTDIR)/emacs/
+
 # JASSPA MicroEmacs
 apps += jasspa_2009
 jasspa_version := 20091011
