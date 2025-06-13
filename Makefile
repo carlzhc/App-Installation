@@ -152,11 +152,7 @@ $(warbler_package):
 # TinyGo https://github.com/tinygo-org/tinygo/releases
 apps += tinygo
 tinygo_version := 0.31.2
-ifeq ($(MSYSTEM),MSYS)
-tinygo_package := tinygo$(tinygo_version).windows-amd64.zip
-else
-tinygo_package := tinygo(golang_version).linux-amd64.tar.gz
-endif
+tinygo_package := tinygo(tinygo_version).$(os)-amd64.$(ext)
 
 tinygo: $(tinygo_package)
 $(tinygo_package):
@@ -172,21 +168,22 @@ $(DESTDIR)/tinygo/lib/musl/COPYRIGHT: $(tinygo_package)
 
 # Golang https://go.dev/dl/
 apps += golang
-golang_version := 1.23.1
-ifeq ($(MSYSTEM),MSYS)
-golang_package := go$(golang_version).windows-amd64.zip
-else
-golang_package := go$(golang_version).linux-amd64.tar.gz
-endif
+golang_version := 1.24.4
+golang_package := go$(golang_version).$(os)-amd64.$(ext)
+
 golang: $(golang_package)
 $(golang_package):
 	wget -c -O $@ https://go.dev/dl/$@
 
 apps += golang-install
-golang-install: $(DESTDIR)/go/VERSION pre_install
-$(DESTDIR)/go/VERSION: $(golang_package)
-	mkdir -p $(DESTDIR)
-	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR);; *.tar.*) $(untar) $< -C $(DESTDIR);; esac
+golang-install: $(DESTDIR)/golang/go$(golang_version)/root/VERSION pre_install
+$(DESTDIR)/golang/go$(golang_version)/root/VERSION: $(golang_package)
+	mkdir -p $(DESTDIR)/golang/go$(golang_version)
+	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR)/golang;; *.tar.*) $(untar) $< -C $(DESTDIR)/golang;; esac
+	mv $(DESTDIR)/golang/go $(DESTDIR)/golang/go$(golang_version)/root
+	ln -snf golang/go$(golang_version)/root $(DESTDIR)/goroot
+	mkdir -p $(DESTDIR)/golang/go$(golang_version)/path
+	ln -snf golang/go$(golang_version)/path $(DESTDIR)/gopath
 
 
 # Graalvm https://www.oracle.com/java/technologies/downloads/#graalvmjava23-windows
