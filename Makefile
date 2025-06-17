@@ -151,8 +151,8 @@ $(warbler_package):
 
 # TinyGo https://github.com/tinygo-org/tinygo/releases
 apps += tinygo
-tinygo_version := 0.31.2
-tinygo_package := tinygo(tinygo_version).$(os)-amd64.$(ext)
+tinygo_version := 0.38.0
+tinygo_package := tinygo$(tinygo_version).$(os)-amd64.$(ext)
 
 tinygo: $(tinygo_package)
 $(tinygo_package):
