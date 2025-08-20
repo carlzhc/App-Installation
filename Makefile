@@ -446,8 +446,13 @@ endif
 
 
 apps += github_cli
-github_cli_version := 2.65.0
+github_cli_version := 2.76.2
+ifeq ($(uname_os), Msys)
 github_cli_package := gh_$(github_cli_version)_windows_amd64.zip
+else
+github_cli_package := gh_$(github_cli_version)_linux_amd64.tar.gz
+endif
+
 github_cli: $(github_cli_package)
 $(github_cli_package):
 	wget -c -O $@.swp https://github.com/cli/cli/releases/download/v$(github_cli_version)/$(github_cli_package)
@@ -455,11 +460,31 @@ $(github_cli_package):
 
 apps += github_cli-install
 github_cli-install: $(github_cli_package)
-	unzip $< bin/* -d ~
+	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR);; *.tar.*) $(untar) $< -C $(DESTDIR);; esac
+
+
+apps += aichat
+aichat_version := v0.30.0
+ifeq ($(uname_os), Msys)
+aichat_package := aichat-$(aichat_version)-x86_64-pc-windows-msvc.zip
+else
+aichat_package := aichat-$(aichat_version)-x86_64-unknown-linux-musl.tar.gz
+endif
+
+aichat: $(aichat_package)
+$(aichat_package):
+	wget -c -O $@.swp https://github.com/sigoden/aichat/releases/download/$(aichat_version)/$(aichat_package)
+	mv -f $@.swp $@
+
+apps += aichat-install
+aichat-install: $(aichat_package)
+	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR);; *.tar.*) $(untar) $< -C $(DESTDIR);; esac
+
 
 ## Add more here.
 
-# All
+
+# --- Start here -----------------
 all: $(apps)
 
 clean:
