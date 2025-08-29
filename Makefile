@@ -7,7 +7,7 @@ usage:
 DESTDIR ?= ~/app
 
 # Apps that can be downloaded/installed in this Makefile
-apps :=
+apps =
 
 # Operating system
 uname_os := $(shell uname -o)
@@ -16,9 +16,11 @@ ifeq ($(uname_os), GNU/Linux)
 os := linux
 req_progs := /usr/bin/lsb_release
 ext := tar.gz
+exe :=
 else ifeq ($(uname_os), Msys)
 os := windows
 ext := zip
+exe := .exe
 else
 os := $(uname_os)
 ext := tar.gz
@@ -26,6 +28,18 @@ endif
 
 unzip := unzip -DD -n
 untar := tar -xamf
+
+
+# --- Start here -----------------
+all: $(apps)
+
+clean:
+	-rm -f .*.done
+
+distclean: clean
+	-git clean -Xf
+
+.PHONY: all clean distclean pre_install $(apps)
 
 # Prepare before installation
 pre_install: .pre_install.done $(req_progs)
@@ -353,10 +367,6 @@ else
 jasspa_bindir := ~/bin
 endif
 
-ifneq ($(MSYSTEM),)
-exe=.exe
-endif
-
 jasspa-install: $(jasspa_bindir)/mec$(exe) pre_install
 $(jasspa_bindir)/mec$(exe): builddir := $(shell mktemp -d --tmpdir jasspa-XXXXXXX)
 $(jasspa_bindir)/mec$(exe): $(jasspa_package)
@@ -480,17 +490,22 @@ apps += aichat-install
 aichat-install: $(aichat_package)
 	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR);; *.tar.*) $(untar) $< -C $(DESTDIR);; esac
 
+apps += just
+just_version := 1.42.4
+ifeq ($(uname_os), Msys)
+just_package := just-$(just_version)-x86_64-pc-windows-msvc.zip
+else
+just_package := just-$(just_version)-x86_64-unknown-linux-musl.tar.gz
+endif
+
+just: $(just_package)
+$(just_package):
+	wget -c -O $@.swp https://github.com/casey/just/releases/download/$(just_version)/$(just_package)
+	mv -f $@.swp $@
+
+apps += just-install
+just-install: DESTDIR = ~/bin
+just-install: $(just_package)
+	case "$<" in *.zip) $(unzip) -j -d $(DESTDIR) $< just$(exe);; *.tar.*) $(untar) $< -C $(DESTDIR) just$(exe);; esac
 
 ## Add more here.
-
-
-# --- Start here -----------------
-all: $(apps)
-
-clean:
-	-rm -f .*.done
-
-distclean: clean
-	-git clean -Xf
-
-.PHONY: all clean distclean pre_install $(apps)
