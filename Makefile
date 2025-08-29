@@ -40,6 +40,7 @@ distclean: clean
 	-git clean -Xf
 
 .PHONY: all clean distclean pre_install $(apps)
+.DELETE_ON_ERROR:
 
 # Prepare before installation
 pre_install: .pre_install.done $(req_progs)
@@ -63,7 +64,7 @@ $(openlogic_jdk8_package):
 	wget -c https://builds.openlogic.com/downloadJDK/openlogic-openjdk/$(openlogic_jdk8_version)/$@
 
 apps += openlogic_jdk8-install
-openlogic_jdk8-install: $(openlogic_jdk8_package) pre_install
+openlogic_jdk8-install: $(openlogic_jdk8_package)
 	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR);; *.tar.*) $(untar) $< -C $(DESTDIR);; esac
 
 
@@ -75,7 +76,7 @@ $(openlogic_jdk11_package):
 	wget -c https://builds.openlogic.com/downloadJDK/openlogic-openjdk/$(openlogic_jdk11_version)/$@
 
 apps += openlogic_jdk11-install
-openlogic_jdk11-install: $(openlogic_jdk11_package) pre_install
+openlogic_jdk11-install: $(openlogic_jdk11_package)
 	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR);; *.tar.*) $(untar) $< -C $(DESTDIR);; esac
 
 apps += openlogic_jdk17
@@ -86,7 +87,7 @@ $(openlogic_jdk17_package):
 	wget -c https://builds.openlogic.com/downloadJDK/openlogic-openjdk/$(openlogic_jdk17_version)/$@
 
 apps += openlogic_jdk17-install
-openlogic_jdk17-install: $(openlogic_jdk17_package) pre_install
+openlogic_jdk17-install: $(openlogic_jdk17_package)
 	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR);; *.tar.*) $(untar) $< -C $(DESTDIR);; esac
 
 apps += openlogic_jdk21
@@ -97,13 +98,13 @@ $(openlogic_jdk21_package):
 	wget -c https://builds.openlogic.com/downloadJDK/openlogic-openjdk/$(openlogic_jdk21_version)/$@
 
 apps += openlogic_jdk21-install
-openlogic_jdk21-install: $(openlogic_jdk21_package) pre_install
+openlogic_jdk21-install: $(openlogic_jdk21_package)
 	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR);; *.tar.*) $(untar) $< -C $(DESTDIR);; esac
 
 
 # Clojure
 apps += clojure-install
-clojure-install: pre_install
+clojure-install:
 	curl -L -O https://github.com/clojure/brew-install/releases/latest/download/linux-install.sh
 	chmod +x linux-install.sh
 	./linux-install.sh --prefix $(DESTDIR)/clojure
@@ -119,7 +120,7 @@ $(jruby_package):
 
 # JRuby installation
 apps += jruby-install
-jruby-install: $(jruby_package) pre_install
+jruby-install: $(jruby_package)
 	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR);; *.tar.*) $(untar) $< -C $(DESTDIR);; esac
 
 # JRuby-Complete
@@ -133,7 +134,7 @@ $(jruby_complete_package):
 
 # JRuby_Complete installation
 apps += jruby_complete-install
-jruby_complete-install: ~/bin/$(jruby_complete_package) pre_install
+jruby_complete-install: ~/bin/$(jruby_complete_package)
 ~/bin/$(jruby_complete_package): $(jruby_complete_package)
 	cp -f $< $@
 
@@ -165,7 +166,7 @@ $(warbler_package):
 
 # TinyGo https://github.com/tinygo-org/tinygo/releases
 apps += tinygo
-tinygo_version := 0.38.0
+tinygo_version := 0.39.0
 tinygo_package := tinygo$(tinygo_version).$(os)-amd64.$(ext)
 
 tinygo: $(tinygo_package)
@@ -174,7 +175,7 @@ $(tinygo_package):
 
 # TinyGo-install
 apps += tinygo-install
-tinygo-install: $(DESTDIR)/tinygo/lib/musl/COPYRIGHT pre_install
+tinygo-install: $(DESTDIR)/tinygo/lib/musl/COPYRIGHT
 $(DESTDIR)/tinygo/lib/musl/COPYRIGHT: $(tinygo_package)
 	mkdir -p $(DESTDIR)
 	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR);; *.tar.*) $(untar) $< -C $(DESTDIR) --skip-old-files;; esac
@@ -190,7 +191,7 @@ $(golang_package):
 	wget -c -O $@ https://go.dev/dl/$@
 
 apps += golang-install
-golang-install: $(DESTDIR)/golang/go$(golang_version)/root/VERSION pre_install
+golang-install: $(DESTDIR)/golang/go$(golang_version)/root/VERSION
 $(DESTDIR)/golang/go$(golang_version)/root/VERSION: $(golang_package)
 	mkdir -p $(DESTDIR)/golang/go$(golang_version)
 	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR)/golang;; *.tar.*) $(untar) $< -C $(DESTDIR)/golang;; esac
@@ -209,6 +210,7 @@ $(graalvm_package):
 	wget -c -O $@ https://download.oracle.com/graalvm/$(graalvm_version)/latest/$@
 
 
+ifdef MSYSTEM
 apps += graalvm-install
 graalvm-install: vswhere='/c/Program Files (x86)/Microsoft Visual Studio/Installer/vswhere.exe'
 graalvm-install: $(graalvm_package)
@@ -219,7 +221,7 @@ graalvm-install: $(graalvm_package)
 	    (echo -e '2\ni'; echo -E "call \"$$instdir\VC\Auxiliary\Build\vcvars64.bat\""; echo -e '.\nw!\nq') | ex  ~/app/graalvm-jdk-*/bin/native-image.cmd; \
 	  fi; \
 	fi
-
+endif
 
 # Graalvm-package
 apps += graalvm-rpm
@@ -308,7 +310,7 @@ babashka_bindir := $(DESTDIR)babashka-$(babashka_version)/bin
 else
 babashka_bindir := ~/bin
 endif
-babashka-install: $(babashka_package) pre_install
+babashka-install: $(babashka_package)
 	mkdir -p $(babashka_bindir)
 	case "$<" in *.zip) $(unzip) $< -d $(babashka_bindir);; *.tar.*) $(untar) $< -C $(babashka_bindir);; esac
 
@@ -319,8 +321,7 @@ emacs_package := emacs-$(emacs_version).zip
 
 emacs: $(emacs_package)
 $(emacs_package):
-	wget -c -O $@.swp https://ftp.gnu.org/gnu/emacs/windows/emacs-$(firstword $(subst ., ,$(emacs_version)))/${emacs_package}
-	mv -f $@.swp $@
+	wget -c -O $@ https://ftp.gnu.org/gnu/emacs/windows/emacs-$(firstword $(subst ., ,$(emacs_version)))/${emacs_package}
 
 apps += emacs-install
 emacs-install: $(emacs_package)
@@ -333,8 +334,7 @@ jasspa_package := jasspa-mesrc-$(jasspa_version).tar.gz
 
 jasspa_2009: $(jasspa_package)
 $(jasspa_package):
-	wget -c -O $@.swp http://www.jasspa.com/release_20090909/$(jasspa_package)
-	mv -f $@.swp $@
+	wget -c -O $@ http://www.jasspa.com/release_20090909/$(jasspa_package)
 
 apps += jasspa_2009-install
 ifeq ($(wildcard ~/bin/.),)
@@ -342,7 +342,7 @@ jasspa_bindir := $(DESTDIR)jasspa-$(babashka_version)/bin
 else
 jasspa_bindir := ~/bin
 endif
-jasspa_2009-install: $(jasspa_bindir)/mec2009 pre_install
+jasspa_2009-install: $(jasspa_bindir)/mec2009
 $(jasspa_bindir)/mec2009: builddir := $(shell mktemp -d --tmpdir jasspa-XXXXXX)
 $(jasspa_bindir)/mec2009: $(jasspa_package)
 	$(untar) $(jasspa_package) -C $(builddir) --strip-components=2
@@ -357,8 +357,7 @@ jasspa_package := jasspa-mesrc-$(jasspa_version).tar.gz
 
 jasspa: $(jasspa_package)
 $(jasspa_package):
-	wget -c -O $@.swp https://github.com/mittelmark/microemacs/archive/refs/tags/v$(jasspa_version).tar.gz
-	mv -f $@.swp $@
+	wget -c -O $@ https://github.com/mittelmark/microemacs/archive/refs/tags/v$(jasspa_version).tar.gz
 
 apps += jasspa-install
 ifeq ($(wildcard ~/bin/.),)
@@ -367,7 +366,7 @@ else
 jasspa_bindir := ~/bin
 endif
 
-jasspa-install: $(jasspa_bindir)/mec$(exe) pre_install
+jasspa-install: $(jasspa_bindir)/mec$(exe)| pre_install
 $(jasspa_bindir)/mec$(exe): builddir := $(shell mktemp -d --tmpdir jasspa-XXXXXXX)
 $(jasspa_bindir)/mec$(exe): $(jasspa_package)
 	$(untar) $(jasspa_package) -C $(builddir) --strip-components=1
@@ -401,11 +400,10 @@ endif
 # https://rakudo.org/
 rakudo: $(rakudo_package)
 $(rakudo_package):
-	wget -c -O $@.swp https://rakudo.org/dl/rakudo/$(rakudo_package)
-	mv -f $@.swp $@
+	wget -c -O $@ https://rakudo.org/dl/rakudo/$(rakudo_package)
 
 apps += rakudo-install
-rakudo-install: $(rakudo_package) pre_install
+rakudo-install: $(rakudo_package)
 	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR);; *.tar.*) $(untar) $< -C $(DESTDIR);; esac
 
 
@@ -415,11 +413,10 @@ chruby_version := 0.3.9
 chruby_package := chruby-$(chruby_version).tar.gz
 chruby: $(chruby_package)
 $(chruby_package):
-	wget -c -O $@.swp https://github.com/postmodern/chruby/releases/download/v$(chruby_version)/$(chruby_package)
-	mv -f $@.swp $@
+	wget -c -O $@ https://github.com/postmodern/chruby/releases/download/v$(chruby_version)/$(chruby_package)
 
 apps += chruby-install
-chruby-install: $(chruby_package) pre_install
+chruby-install: $(chruby_package)
 	$(untar) $(chruby_package)
 	$(MAKE) -C chruby-$(chruby_version) install PREFIX=$(DESTDIR)/chruby-$(chruby_version)
 	-rm -f ~/.bashrc.d/chruby
@@ -434,10 +431,9 @@ ruby-installer_version := 0.9.3
 ruby-installer_package := ruby-install-$(ruby-installer_version).tar.gz
 ruby-installer: $(ruby-installer_package)
 $(ruby-installer_package):
-	wget -c -O $@.swp https://github.com/postmodern/ruby-install/releases/download/v$(ruby-installer_version)/$(ruby-installer_package)
-	mv -f $@.swp $@
+	wget -c -O $@ https://github.com/postmodern/ruby-install/releases/download/v$(ruby-installer_version)/$(ruby-installer_package)
 
-ruby-installer-install: $(ruby-installer_package) pre_install
+ruby-installer-install: $(ruby-installer_package)
 	$(untar) $(ruby-installer_package)
 	$(MAKE) -C ruby-install-$(ruby-installer_version) install PREFIX=$(DESTDIR)/ruby-install-$(ruby-installer_version)
 
@@ -465,8 +461,7 @@ endif
 
 github_cli: $(github_cli_package)
 $(github_cli_package):
-	wget -c -O $@.swp https://github.com/cli/cli/releases/download/v$(github_cli_version)/$(github_cli_package)
-	mv -f $@.swp $@
+	wget -c -O $@ https://github.com/cli/cli/releases/download/v$(github_cli_version)/$(github_cli_package)
 
 apps += github_cli-install
 github_cli-install: $(github_cli_package)
@@ -483,10 +478,10 @@ endif
 
 aichat: $(aichat_package)
 $(aichat_package):
-	wget -c -O $@.swp https://github.com/sigoden/aichat/releases/download/$(aichat_version)/$(aichat_package)
-	mv -f $@.swp $@
+	wget -c -O $@ https://github.com/sigoden/aichat/releases/download/$(aichat_version)/$(aichat_package)
 
 apps += aichat-install
+aichat-install: DESTDIR = ~/bin
 aichat-install: $(aichat_package)
 	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR);; *.tar.*) $(untar) $< -C $(DESTDIR);; esac
 
@@ -500,8 +495,7 @@ endif
 
 just: $(just_package)
 $(just_package):
-	wget -c -O $@.swp https://github.com/casey/just/releases/download/$(just_version)/$(just_package)
-	mv -f $@.swp $@
+	wget -c -O $@ https://github.com/casey/just/releases/download/$(just_version)/$(just_package)
 
 apps += just-install
 just-install: DESTDIR = ~/bin
@@ -509,3 +503,8 @@ just-install: $(just_package)
 	case "$<" in *.zip) $(unzip) -j -d $(DESTDIR) $< just$(exe);; *.tar.*) $(untar) $< -C $(DESTDIR) just$(exe);; esac
 
 ## Add more here.
+
+
+
+## Add dependencies to all -install targets
+$(filter %-install,$(apps)): | pre_install
