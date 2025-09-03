@@ -292,7 +292,7 @@ bw.$(ext):
 
 # Babashka https://github.com/babashka/babashka/releases
 apps += babashka
-babashka_version := 1.12.196
+babashka_version := 1.12.207
 
 ifeq ($(os), linux)
 babashka_package := babashka-$(babashka_version)-$(os)-amd64-static.tar.gz
@@ -378,7 +378,8 @@ $(jasspa_bindir)/mec$(exe): $(jasspa_package)
 	[ -f $(builddir)/bin/mec-windows.exe ] && install -D $(builddir)/bin/mec-windows.exe $@ ||:
 	test -f $@
 	-cp -f $(builddir)/bin/bfs* $(@D)
-	rm -rf $(builddir)
+	-cp -r --update=none $(builddir)/jasspa ~/.jasspa
+	-rm -rf $(builddir)
 
 apps += phcl-microemacs
 phcl-microemacs_pkg := $(patsubst %,phcl-microemacs/%, MicroEmacs-4.21-0.0.src.rpm MicroEmacs-4.21-0.0.x86_64.rpm)
