@@ -292,7 +292,7 @@ bw.$(ext):
 
 # Babashka https://github.com/babashka/babashka/releases
 apps += babashka
-babashka_version := 1.12.207
+babashka_version := 1.12.208
 
 ifeq ($(os), linux)
 babashka_package := babashka-$(babashka_version)-$(os)-amd64-static.tar.gz
