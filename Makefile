@@ -34,7 +34,10 @@ endif
 unzip := unzip -DD -n
 untar := tar -xamf
 
-arch := $(uname -m)
+arch := $(shell uname -m)
+ifeq ($(arch), x86_64)
+arch := amd64
+endif
 
 # --- Start here -----------------
 all: $(apps)
@@ -173,7 +176,7 @@ $(warbler_package):
 # TinyGo https://github.com/tinygo-org/tinygo/releases
 apps += tinygo
 tinygo_version := 0.39.0
-tinygo_package := tinygo$(tinygo_version).$(os)-amd64$(ext)
+tinygo_package := tinygo$(tinygo_version).$(os)-$(arch)$(ext)
 
 tinygo: $(tinygo_package)
 $(tinygo_package):
@@ -190,7 +193,7 @@ $(DESTDIR)/tinygo/lib/musl/COPYRIGHT: $(tinygo_package)
 # Golang https://go.dev/dl/
 apps += golang
 golang_version := 1.24.4
-golang_package := go$(golang_version).$(os)-amd64$(ext)
+golang_package := go$(golang_version).$(os)-$(arch)$(ext)
 
 golang: $(golang_package)
 $(golang_package):
@@ -250,7 +253,7 @@ lein.zip:
 # TruffleRuby https://github.com/oracle/truffleruby/releases
 apps += truffleruby
 truffleruby_version := 24.0.2
-truffleruby_package := truffleruby-$(truffleruby_version)-$(os)-amd64$(ext)
+truffleruby_package := truffleruby-$(truffleruby_version)-$(os)-$(arch)$(ext)
 truffleruby: $(truffleruby_package)
 $(truffleruby_package):
 	wget -c -O $@ https://github.com/oracle/truffleruby/releases/download/graal-$(truffleruby_version)/$(truffleruby_package)
@@ -301,11 +304,9 @@ apps += babashka
 babashka_version := 1.12.208
 
 ifeq ($(os), linux)
-babashka_package := babashka-$(babashka_version)-$(os)-amd64-static$(ext)
+babashka_package := babashka-$(babashka_version)-$(os)-$(arch)-static$(ext)
 else ifeq ($(os), windows)
-babashka_package := babashka-$(babashka_version)-$(os)-amd64$(ext)
-else ifeq ($(os), Android)
-babashka_package := babashka-$(babashka_version)-linux-aarch64-static$(ext)
+babashka_package := babashka-$(babashka_version)-$(os)-$(arch)$(ext)
 endif
 
 babashka: $(babashka_package)
@@ -463,9 +464,9 @@ endif
 apps += github_cli
 github_cli_version := 2.76.2
 ifeq ($(uname_os), Msys)
-github_cli_package := gh_$(github_cli_version)_windows_amd64.zip
+github_cli_package := gh_$(github_cli_version)_windows_$(arch).zip
 else
-github_cli_package := gh_$(github_cli_version)_linux_amd64.tar.gz
+github_cli_package := gh_$(github_cli_version)_linux_$(arch).tar.gz
 endif
 
 github_cli: $(github_cli_package)
