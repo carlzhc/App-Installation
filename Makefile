@@ -1,3 +1,5 @@
+#!/usr/bin/make -f
+
 usage:
 	@echo "usage: make [target...]"
 	@echo "target:"
@@ -15,20 +17,24 @@ uname_os := $(shell uname -o)
 ifeq ($(uname_os), GNU/Linux)
 os := linux
 req_progs := /usr/bin/lsb_release
-ext := tar.gz
+ext := .tar.gz
 exe :=
 else ifeq ($(uname_os), Msys)
 os := windows
-ext := zip
+ext := .zip
 exe := .exe
+else ifeq ($(uname_os), Android)
+os := linux
+ext := .tar.gz
 else
 os := $(uname_os)
-ext := tar.gz
+ext := .tar.gz
 endif
 
 unzip := unzip -DD -n
 untar := tar -xamf
 
+arch := $(uname -m)
 
 # --- Start here -----------------
 all: $(apps)
@@ -58,7 +64,7 @@ pre_install: .pre_install.done $(req_progs)
 # JDK
 apps += openlogic_jdk8
 openlogic_jdk8_version := 8u422-b05
-openlogic_jdk8_package := openlogic-openjdk-$(openlogic_jdk8_version)-$(os)-x64.$(ext)
+openlogic_jdk8_package := openlogic-openjdk-$(openlogic_jdk8_version)-$(os)-x64$(ext)
 openlogic_jdk8: $(openlogic_jdk8_package)
 $(openlogic_jdk8_package):
 	wget -c https://builds.openlogic.com/downloadJDK/openlogic-openjdk/$(openlogic_jdk8_version)/$@
@@ -70,7 +76,7 @@ openlogic_jdk8-install: $(openlogic_jdk8_package)
 
 apps += openlogic_jdk11
 openlogic_jdk11_version := 11.0.24+8
-openlogic_jdk11_package := openlogic-openjdk-$(openlogic_jdk11_version)-$(os)-x64.$(ext)
+openlogic_jdk11_package := openlogic-openjdk-$(openlogic_jdk11_version)-$(os)-x64$(ext)
 openlogic_jdk11: $(openlogic_jdk11_package)
 $(openlogic_jdk11_package):
 	wget -c https://builds.openlogic.com/downloadJDK/openlogic-openjdk/$(openlogic_jdk11_version)/$@
@@ -81,7 +87,7 @@ openlogic_jdk11-install: $(openlogic_jdk11_package)
 
 apps += openlogic_jdk17
 openlogic_jdk17_version := 17.0.12+7
-openlogic_jdk17_package := openlogic-openjdk-$(openlogic_jdk17_version)-$(os)-x64.$(ext)
+openlogic_jdk17_package := openlogic-openjdk-$(openlogic_jdk17_version)-$(os)-x64$(ext)
 openlogic_jdk17: $(openlogic_jdk17_package)
 $(openlogic_jdk17_package):
 	wget -c https://builds.openlogic.com/downloadJDK/openlogic-openjdk/$(openlogic_jdk17_version)/$@
@@ -92,7 +98,7 @@ openlogic_jdk17-install: $(openlogic_jdk17_package)
 
 apps += openlogic_jdk21
 openlogic_jdk21_version := 21.0.4+7
-openlogic_jdk21_package := openlogic-openjdk-$(openlogic_jdk21_version)-$(os)-x64.$(ext)
+openlogic_jdk21_package := openlogic-openjdk-$(openlogic_jdk21_version)-$(os)-x64$(ext)
 openlogic_jdk21: $(openlogic_jdk21_package)
 $(openlogic_jdk21_package):
 	wget -c https://builds.openlogic.com/downloadJDK/openlogic-openjdk/$(openlogic_jdk21_version)/$@
@@ -142,7 +148,7 @@ jruby_complete-install: ~/bin/$(jruby_complete_package)
 # Maven
 apps += maven
 maven_version := 3.9.9
-maven_package := apache-maven-$(maven_version)-bin.$(ext)
+maven_package := apache-maven-$(maven_version)-bin$(ext)
 maven: $(maven_package)
 $(maven_package):
 	wget -c https://dlcdn.apache.org/maven/maven-3/$(maven_version)/binaries/$@
@@ -167,7 +173,7 @@ $(warbler_package):
 # TinyGo https://github.com/tinygo-org/tinygo/releases
 apps += tinygo
 tinygo_version := 0.39.0
-tinygo_package := tinygo$(tinygo_version).$(os)-amd64.$(ext)
+tinygo_package := tinygo$(tinygo_version).$(os)-amd64$(ext)
 
 tinygo: $(tinygo_package)
 $(tinygo_package):
@@ -184,7 +190,7 @@ $(DESTDIR)/tinygo/lib/musl/COPYRIGHT: $(tinygo_package)
 # Golang https://go.dev/dl/
 apps += golang
 golang_version := 1.24.4
-golang_package := go$(golang_version).$(os)-amd64.$(ext)
+golang_package := go$(golang_version).$(os)-amd64$(ext)
 
 golang: $(golang_package)
 $(golang_package):
@@ -204,7 +210,7 @@ $(DESTDIR)/golang/go$(golang_version)/root/VERSION: $(golang_package)
 # Graalvm https://www.oracle.com/java/technologies/downloads/#graalvmjava23-windows
 apps += graalvm
 graalvm_version := 23
-graalvm_package := graalvm-jdk-$(graalvm_version)_$(os)-x64_bin.$(ext)
+graalvm_package := graalvm-jdk-$(graalvm_version)_$(os)-x64_bin$(ext)
 graalvm: $(graalvm_package)
 $(graalvm_package):
 	wget -c -O $@ https://download.oracle.com/graalvm/$(graalvm_version)/latest/$@
@@ -244,7 +250,7 @@ lein.zip:
 # TruffleRuby https://github.com/oracle/truffleruby/releases
 apps += truffleruby
 truffleruby_version := 24.0.2
-truffleruby_package := truffleruby-$(truffleruby_version)-$(os)-amd64.$(ext)
+truffleruby_package := truffleruby-$(truffleruby_version)-$(os)-amd64$(ext)
 truffleruby: $(truffleruby_package)
 $(truffleruby_package):
 	wget -c -O $@ https://github.com/oracle/truffleruby/releases/download/graal-$(truffleruby_version)/$(truffleruby_package)
@@ -283,10 +289,10 @@ $(fpm): $(truffleruby_bin)
 # Bitwarden Cli
 apps += bitwarden
 bitwarden: bw
-bw: bw.$(ext)
+bw: bw$(ext)
 	case "$<" in *.zip) $(unzip) $<;; *.tar.*) $(untar) $<;; esac
 
-bw.$(ext):
+bw$(ext):
 	wget -c -O $@ 'https://vault.bitwarden.com/download/?app=cli&platform=$(ow)'
 
 
@@ -295,9 +301,11 @@ apps += babashka
 babashka_version := 1.12.208
 
 ifeq ($(os), linux)
-babashka_package := babashka-$(babashka_version)-$(os)-amd64-static.tar.gz
+babashka_package := babashka-$(babashka_version)-$(os)-amd64-static$(ext)
 else ifeq ($(os), windows)
-babashka_package := babashka-$(babashka_version)-$(os)-amd64.zip
+babashka_package := babashka-$(babashka_version)-$(os)-amd64$(ext)
+else ifeq ($(os), Android)
+babashka_package := babashka-$(babashka_version)-linux-aarch64-static$(ext)
 endif
 
 babashka: $(babashka_package)
