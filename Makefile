@@ -150,11 +150,15 @@ jruby_complete-install: ~/bin/$(jruby_complete_package)
 
 # Maven
 apps += maven
-maven_version := 3.9.9
+maven_version := 3.9.11
 maven_package := apache-maven-$(maven_version)-bin$(ext)
 maven: $(maven_package)
 $(maven_package):
 	wget -c https://dlcdn.apache.org/maven/maven-3/$(maven_version)/binaries/$@
+
+apps += maven-install
+maven-install: $(maven_package)
+	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR);; *.tar.*) $(untar) $< -C $(DESTDIR);; esac
 
 # Maven-package
 apps += maven-rpm
