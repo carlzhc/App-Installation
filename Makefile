@@ -516,6 +516,23 @@ just-install: DESTDIR = ~/bin
 just-install: $(just_package)
 	case "$<" in *.zip) $(unzip) -j -d $(DESTDIR) $< just$(exe);; *.tar.*) $(untar) $< -C $(DESTDIR) just$(exe);; esac
 
+ifdef MSYSTEM
+apps += jellyfin-ffmpeg
+ffmpeg_version := 7.1.2-1
+ffmpeg_package := jellyfin-ffmpeg_$(ffmpeg_version)_portable_win64-clang-gpl.zip
+
+jellyfin-ffmpeg:$(ffmpeg_package)
+$(ffmpeg_package):
+	wget -c -O $@.swp https://github.com/jellyfin/jellyfin-ffmpeg/releases/download/v$(ffmpeg_version)/$@
+	mv -f $@.swp $@
+
+apps += jellyfin-ffmpeg-install
+jellyfin-ffmpeg-install: DESTDIR = ~/bin
+jellyfin-ffmpeg-install: $(ffmpeg_package)
+	case "$<" in *.zip) $(unzip) -j -d $(DESTDIR) $< \*$(exe);; *.tar.*) $(untar) $< -C $(DESTDIR) \*$(exe);; esac
+endif
+
+
 ## Add more here.
 
 
