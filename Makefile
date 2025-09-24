@@ -3,7 +3,7 @@
 usage:
 	@echo "usage: make [target...]"
 	@echo "target:"
-	@printf "  %-24s%s    %s\n" $(foreach app, $(apps), $(app) "$(value $(app)_version)" "$(value $(app)_desc)") | LC_ALL=C sort --version-sort
+	@printf "  %-24s%12s    %s\n" $(foreach app, $(apps), $(app) "$(value $(app)_version)" "$(value $(app)_desc)") | LC_ALL=C sort --version-sort
 
 # Install destination prefix
 DESTDIR ?= ~/app
@@ -113,8 +113,13 @@ openlogic_jdk21-install: $(openlogic_jdk21_package)
 
 # Clojure
 apps += clojure-install
+clojure-install_version = 1.12.2.1571
+clojure-install_desc = Install the latest version of clojure
 clojure-install:
-	curl -L -O https://github.com/clojure/brew-install/releases/latest/download/linux-install.sh
+	ver=`curl -sSf https://api.github.com/repos/clojure/brew-install/releases/latest | jq -r '.tag_name'`; \
+	if [[ $${ver} != $(clojure-install_version) ]]; then \
+	    echo "-- New release found: $${ver}"; fi
+	curl -L -O https://github.com/clojure/brew-install/releases/download/$(clojure-install_version)/linux-install.sh
 	chmod +x linux-install.sh
 	./linux-install.sh --prefix $(DESTDIR)/clojure
 
