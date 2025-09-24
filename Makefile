@@ -3,7 +3,7 @@
 usage:
 	@echo "usage: make [target...]"
 	@echo "target:"
-	@printf "  %-24s%s\n" $(foreach app, $(apps), $(app) "$(value $(app)_version)") | LC_ALL=C sort --version-sort
+	@printf "  %-24s%s    %s\n" $(foreach app, $(apps), $(app) "$(value $(app)_version)" "$(value $(app)_desc)") | LC_ALL=C sort --version-sort
 
 # Install destination prefix
 DESTDIR ?= ~/app
@@ -117,6 +117,23 @@ clojure-install:
 	curl -L -O https://github.com/clojure/brew-install/releases/latest/download/linux-install.sh
 	chmod +x linux-install.sh
 	./linux-install.sh --prefix $(DESTDIR)/clojure
+
+
+# clj-kondo
+apps += clj-kondo
+clj-kondo_version := 2025.09.22
+clj-kondo_package := clj-kondo-$(clj-kondo_version)-$(os)-$(arch)$(ext)
+clj-kondo_desc := A static analyzer and linter for Clojure code
+
+clj-kondo: $(clj-kondo_package)
+$(clj-kondo_package):
+	wget -c -O $@.swp https://github.com/clj-kondo/clj-kondo/releases/download/v$(clj-kondo_version)/$@
+	mv -f $@.swp $@
+
+apps += clj-kondo-install
+clj-kondo-install: DESTDIR = ~/bin
+clj-kondo-install: $(clj-kondo_package)
+	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR);; *.tar.*) $(untar) $< -C $(DESTDIR);; esac
 
 
 # JRuby https://repo1.maven.org/maven2/org/jruby/jruby-dist/
