@@ -114,7 +114,7 @@ openlogic_jdk21-install: $(openlogic_jdk21_package)
 # Clojure
 apps += clojure-install
 clojure-install_version = 1.12.2.1571
-clojure-install_desc = Install the latest version of clojure
+clojure-install_desc = Install the latest version of clojure.
 clojure-install:
 	ver=`curl -sSf https://api.github.com/repos/clojure/brew-install/releases/latest | jq -r '.tag_name'`; \
 	if [[ $${ver} != $(clojure-install_version) ]]; then \
@@ -128,7 +128,7 @@ clojure-install:
 apps += clj-kondo
 clj-kondo_version := 2025.09.22
 clj-kondo_package := clj-kondo-$(clj-kondo_version)-$(os)-$(arch)$(ext)
-clj-kondo_desc := A static analyzer and linter for Clojure code
+clj-kondo_desc := A static analyzer and linter for Clojure code.
 
 clj-kondo: $(clj-kondo_package)
 $(clj-kondo_package):
@@ -553,6 +553,22 @@ jellyfin-ffmpeg-install: DESTDIR = ~/bin
 jellyfin-ffmpeg-install: $(ffmpeg_package)
 	case "$<" in *.zip) $(unzip) -j -d $(DESTDIR) $< \*$(exe);; *.tar.*) $(untar) $< -C $(DESTDIR) \*$(exe);; esac
 endif
+
+
+apps += venice
+venice_desc = Venice, a Clojure inspired sandboxed as a safe scripting language.
+venice_version = 1.12.55
+venice_package = venice-$(venice_version).jar
+venice: $(venice_package)
+$(venice_package):
+	wget -c -O $@ "https://repo1.maven.org/maven2/com/github/jlangch/venice/$(venice_version)/$@"
+
+apps += venice-install
+venice-install: DESTDIR := $(DESTDIR)/venice
+venice-install: $(venice_package)
+	mkdir -p $(DESTDIR)
+	java -jar $< -setup -colors-dark -dir $(DESTDIR)
+
 
 
 ## Add more here.
