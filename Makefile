@@ -14,6 +14,9 @@ apps =
 # Operating system
 uname_os := $(shell uname -o)
 
+# MSYS environment variable
+MSYSTEM ?=
+
 ifeq ($(uname_os), GNU/Linux)
 os := linux
 req_progs := /usr/bin/lsb_release
@@ -111,6 +114,46 @@ openlogic_jdk21-install: $(openlogic_jdk21_package)
 	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR);; *.tar.*) $(untar) $< -C $(DESTDIR);; esac
 
 
+# TruffleRuby https://github.com/oracle/truffleruby/releases
+apps += truffleruby
+truffleruby_version := 24.0.2
+truffleruby_package := truffleruby-$(truffleruby_version)-$(os)-$(arch)$(ext)
+truffleruby: $(truffleruby_package)
+$(truffleruby_package):
+	wget -c -O $@ https://github.com/oracle/truffleruby/releases/download/graal-$(truffleruby_version)/$(truffleruby_package)
+
+apps += truffleruby-install
+truffleruby_dir := $(DESTDIR)$(patsubst %.tar.gz,%,$(truffleruby_package))/
+truffleruby_bin := $(truffleruby_dir)bin/truffleruby
+truffleruby_ref := https://www.graalvm.org/latest/reference-manual/ruby/RubyManagers/#using-truffleruby-without-a-ruby-manager
+$(truffleruby_bin): $(truffleruby_package)
+	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR);; *.tar.*) $(untar) $< -C $(DESTDIR);; esac
+
+truffleruby_deps := $(truffleruby_dir)src/main/c/openssl/openssl.so $(truffleruby_dir)src/main/c/psych/psych.so
+$(truffleruby_deps):
+	distrib=$$(lsb_release -i | cut -f2); \
+	case "$$distrib" in \
+	    RedHatEnterpriseServer) repo='codeready-rebuilder*';; \
+	    CentOSStream) repo=powertools;; \
+	    *) repo='*';; \
+	esac; \
+	set -ex; for p in openssl-devel libyaml-devel zlib-devel gcc; do \
+	    rpm -q $$p &>/dev/null || sudo dnf -y install --enablerepo="$$repo" $$p; done;
+	cd $(truffleruby_dir) && lib/truffle/post_install_hook.sh
+	@test -z "$${GEM_HOME}" || echo -e "** Please unset environment variable \e[31mGEM_HOME\e[0m, see $(truffleruby_ref)"
+	@test -z "$${GEM_PATH}" || echo -e "** Please unset environment variable \e[31mGEM_PATH\e[0m, see $(truffleruby_ref)"
+
+truffleruby-install: pre_install $(truffleruby_bin) $(truffleruby_deps)
+
+
+# fpm for unpacking rpm files
+apps += fpm-install
+fpm := $(truffleruby_dir)/bin/fpm
+fpm-install: $(fpm)
+$(fpm): $(truffleruby_bin)
+	$(truffleruby_bin) -S gem install fpm
+
+
 # Clojure
 apps += clojure-install
 clojure-install_version = 1.12.2.1571
@@ -185,8 +228,9 @@ maven-install: $(maven_package)
 # Maven-package
 apps += maven-rpm
 maven_arch := noarch
-maven_rpm: apache-maven-$(maven_version).$(maven_arch).rpm
-$(maven_rpm): $(maven_package) $(fpm)
+maven-rpm_file := apache-maven-$(maven_version).$(maven_arch).rpm
+maven-rpm_desc := Install maven from the RPM package
+maven-rpm: $(maven-rpm_file)
 	$(fpm) -s tar -t rpm -n apache-maven -a $(maven_arch) --prefix $(DESTDIR) $<
 
 
@@ -274,45 +318,6 @@ lein.zip:
 	wget -c https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein
 	chmod +x lein
 	zip --move --test $@ lein
-
-
-# TruffleRuby https://github.com/oracle/truffleruby/releases
-apps += truffleruby
-truffleruby_version := 24.0.2
-truffleruby_package := truffleruby-$(truffleruby_version)-$(os)-$(arch)$(ext)
-truffleruby: $(truffleruby_package)
-$(truffleruby_package):
-	wget -c -O $@ https://github.com/oracle/truffleruby/releases/download/graal-$(truffleruby_version)/$(truffleruby_package)
-
-apps += truffleruby-install
-truffleruby_dir := $(DESTDIR)$(patsubst %.tar.gz,%,$(truffleruby_package))/
-truffleruby_bin := $(truffleruby_dir)bin/truffleruby
-truffleruby_ref := https://www.graalvm.org/latest/reference-manual/ruby/RubyManagers/#using-truffleruby-without-a-ruby-manager
-$(truffleruby_bin): $(truffleruby_package)
-	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR);; *.tar.*) $(untar) $< -C $(DESTDIR);; esac
-
-truffleruby_deps := $(truffleruby_dir)src/main/c/openssl/openssl.so $(truffleruby_dir)src/main/c/psych/psych.so
-$(truffleruby_deps):
-	distrib=$$(lsb_release -i | cut -f2); \
-	case "$$distrib" in \
-	    RedHatEnterpriseServer) repo='codeready-rebuilder*';; \
-	    CentOSStream) repo=powertools;; \
-	    *) repo='*';; \
-	esac; \
-	set -ex; for p in openssl-devel libyaml-devel zlib-devel gcc; do \
-	    rpm -q $$p &>/dev/null || sudo dnf -y install --enablerepo="$$repo" $$p; done;
-	cd $(truffleruby_dir) && lib/truffle/post_install_hook.sh
-	@test -z "$${GEM_HOME}" || echo -e "** Please unset environment variable \e[31mGEM_HOME\e[0m, see $(truffleruby_ref)"
-	@test -z "$${GEM_PATH}" || echo -e "** Please unset environment variable \e[31mGEM_PATH\e[0m, see $(truffleruby_ref)"
-
-truffleruby-install: pre_install $(truffleruby_bin) $(truffleruby_deps)
-
-# fpm for unpacking rpm files
-apps += fpm-install
-fpm := $(truffleruby_dir)/bin/fpm
-fpm-install: $(fpm)
-$(fpm): $(truffleruby_bin)
-	$(truffleruby_bin) -S gem install fpm
 
 
 # Bitwarden Cli
@@ -563,11 +568,27 @@ venice: $(venice_package)
 $(venice_package):
 	wget -c -O $@ "https://repo1.maven.org/maven2/com/github/jlangch/venice/$(venice_version)/$@"
 
+
+define venice_launcher =
+#!/bin/bash
+
+REPL_HOME=~/app/venice
+if [[ $$@ ]]; then
+    exec java -jar $$REPL_HOME/libs/$(venice_package) "$$@"
+else
+    cd $$REPL_HOME && exec ./repl.sh
+fi
+
+endef
+export venice_launcher
+
 apps += venice-install
 venice-install: DESTDIR := $(DESTDIR)/venice
 venice-install: $(venice_package)
-	mkdir -p $(DESTDIR)
 	java -jar $< -setup -colors-dark -dir $(DESTDIR)
+	mkdir -p $(DESTDIR)/bin
+	printf "%s\n" "$$venice_launcher" | tee $(DESTDIR)/bin/venice
+	chmod +x $(DESTDIR)/bin/venice
 
 
 
