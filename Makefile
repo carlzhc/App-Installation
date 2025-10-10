@@ -590,8 +590,8 @@ export venice_launcher
 apps += venice-install
 venice-install: DESTDIR := $(DESTDIR)/venice
 venice-install: $(venice_package)
-	java -jar $< -setup -colors-dark -dir $(DESTDIR)
 	mkdir -p $(DESTDIR)/bin
+	java -jar $< -setup -colors-dark -dir $(DESTDIR)
 	printf "%s\n" "$$venice_launcher" | tee $(DESTDIR)/bin/venice
 	chmod +x $(DESTDIR)/bin/venice
 
