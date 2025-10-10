@@ -594,6 +594,11 @@ venice-install: $(venice_package)
 	java -jar $< -setup -colors-dark -dir $(DESTDIR)
 	printf "%s\n" "$$venice_launcher" | tee $(DESTDIR)/bin/venice
 	chmod +x $(DESTDIR)/bin/venice
+ifdef MSYSTEM
+	rm -f $(DESTDIR)/repl.*
+	unzip -p $< com/github/jlangch/venice/setup/repl.sh | sed -e 's!{{INSTALL_PATH}}!$(DESTDIR)!' -e '/-cp /s!libs:!!' > $(DESTDIR)/repl.sh
+	unzip -p $< com/github/jlangch/venice/setup/repl.unix.env > $(DESTDIR)/repl.env
+endif
 
 
 
