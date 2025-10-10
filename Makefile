@@ -282,15 +282,16 @@ $(DESTDIR)/golang/go$(golang_version)/root/VERSION: $(golang_package)
 
 # Graalvm https://www.oracle.com/java/technologies/downloads/#graalvmjava23-windows
 apps += graalvm
-graalvm_version := 23
+graalvm_desc := High-performance, polyglot runtime environment and JDK
+graalvm_version := 25
 graalvm_package := graalvm-jdk-$(graalvm_version)_$(os)-x64_bin$(ext)
 graalvm: $(graalvm_package)
 $(graalvm_package):
 	wget -c -O $@ https://download.oracle.com/graalvm/$(graalvm_version)/latest/$@
 
 
-ifdef MSYSTEM
 apps += graalvm-install
+ifdef MSYSTEM
 graalvm-install: vswhere='/c/Program Files (x86)/Microsoft Visual Studio/Installer/vswhere.exe'
 graalvm-install: $(graalvm_package)
 	unzip $< -d ~/app/
@@ -300,6 +301,10 @@ graalvm-install: $(graalvm_package)
 	    (echo -e '2\ni'; echo -E "call \"$$instdir\VC\Auxiliary\Build\vcvars64.bat\""; echo -e '.\nw!\nq') | ex  ~/app/graalvm-jdk-*/bin/native-image.cmd; \
 	  fi; \
 	fi
+else
+graalvm-install: $(graalvm_package)
+	mkdir -p $(DESTDIR)
+	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR);; *.tar.*) $(untar) $< -C $(DESTDIR) --skip-old-files;; esac
 endif
 
 # Graalvm-package
