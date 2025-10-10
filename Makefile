@@ -298,7 +298,7 @@ graalvm-install: $(graalvm_package)
 	if [[ -x $(vswhere) ]]; then \
 	  instdir="`$(vswhere) -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`"; \
 	  if [[ $$instdir ]]; then \
-	    (echo -e '2\ni'; echo -E "call \"$$instdir\VC\Auxiliary\Build\vcvars64.bat\""; echo -e '.\nw!\nq') | ex  ~/app/graalvm-jdk-*/bin/native-image.cmd; \
+	    (echo -e '2\ni'; echo -E "call \"$$instdir\VC\Auxiliary\Build\vcvars64.bat\""; echo -e '.\nw!\nq') | ex  ~/app/graalvm-jdk-$(graalvm_version)*/bin/native-image.cmd; \
 	  fi; \
 	fi
 else
