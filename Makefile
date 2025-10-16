@@ -19,7 +19,6 @@ MSYSTEM ?=
 
 ifeq ($(uname_os), GNU/Linux)
 os := linux
-req_progs := /usr/bin/lsb_release
 ext := .tar.gz
 exe :=
 else ifeq ($(uname_os), Msys)
@@ -55,7 +54,7 @@ distclean: clean
 .DELETE_ON_ERROR:
 
 # Prepare before installation
-pre_install: .pre_install.done $(req_progs)
+pre_install: .pre_install.done
 
 .pre_install.done:
 	mkdir -p $(DESTDIR)
@@ -600,6 +599,23 @@ ifdef MSYSTEM
 	unzip -p $< com/github/jlangch/venice/setup/repl.unix.env > $(DESTDIR)/repl.env
 endif
 
+apps += mg
+mg_desc = OpenBSD Mg editor.
+mg_version = latest
+mg_package = mg-master.zip
+mg: $(mg_package)
+$(mg_package):
+	wget -c -O $@ "https://github.com/troglobit/mg/archive/refs/heads/master.zip"
+
+apps += mg-install
+mg-install: t := $(shell mktemp -d)
+mg-install: w := $t/$(basename $(mg_package))
+mg-install: $(mg_package)
+	unzip $(mg_package) -d $t
+	cd $w && ./autogen.sh
+	cd $w && ./configure --without-curses --prefix $(DESTDIR)/mg LDFLAGS=-static
+	cd $w && $(MAKE) install clean
+	rm -rf $t
 
 
 ## Add more here.
