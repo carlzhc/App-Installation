@@ -371,37 +371,48 @@ apps += emacs-install
 emacs-install: $(emacs_package)
 	unzip $< -d $(DESTDIR)/emacs/
 
+
 # JASSPA MicroEmacs
-apps += jasspa_2009
-jasspa_version := 20091011
-jasspa_package := jasspa-mesrc-$(jasspa_version).tar.gz
+apps += jasspa2009
+jasspa2009_version := latest
+jasspa2009_package := jasspa-mesrc-$(jasspa2009_version).zip
+jasspa2009: $(jasspa2009_package)
+$(jasspa2009_package):
+	wget -c -O $@ https://github.com/mittelmark/microemacs/archive/refs/heads/master.zip
 
-jasspa_2009: $(jasspa_package)
-$(jasspa_package):
-	wget -c -O $@ http://www.jasspa.com/release_20090909/$(jasspa_package)
-
-apps += jasspa_2009-install
+apps += jasspa2009-install
 ifeq ($(wildcard ~/bin/.),)
-jasspa_bindir := $(DESTDIR)jasspa-$(babashka_version)/bin
+jasspa2009_bindir := $(DESTDIR)jasspa-$(babashka_version)/bin
 else
-jasspa_bindir := ~/bin
+jasspa2009_bindir := ~/bin
 endif
-jasspa_2009-install: $(jasspa_bindir)/mec2009
-$(jasspa_bindir)/mec2009: builddir := $(shell mktemp -d --tmpdir jasspa-XXXXXX)
-$(jasspa_bindir)/mec2009: $(jasspa_package)
-	$(untar) $(jasspa_package) -C $(builddir) --strip-components=2
-	cd $(builddir)/src && sed -i -e 's/sys_errlist\[errno]/strerror(errno)/g' *.c
-	cd $(builddir)/src && ./build && cp -f mec $@
+jasspa2009-install: $(jasspa2009_bindir)/mec2009$(exe)
+$(jasspa2009_bindir)/mec2009$(exe): builddir := $(shell mktemp -d --tmpdir jasspa-XXXXXX)
+$(jasspa2009_bindir)/mec2009$(exe): $(jasspa2009_package)
+	$(unzip) -q $(jasspa2009_package) -d $(builddir)
+	cd $(builddir)/microemacs-master/bfs && CC=gcc $(MAKE) && install -m 755 -s bfs$(exe) $(@D)
+ifdef MSYSTEM
+	cd $(builddir)/microemacs-master/src && ./build -t c -m cygwin.gmk -D CONSOLE_LIBS=-lcurses
+else
+	cd $(builddir)/microemacs-master/src && ./build -t c
+endif
+	cd $(builddir)/microemacs-master/src && install -m 755 -s mec$(exe) $@
+	cd $(builddir)/microemacs-master && bfs/bfs$(exe) -o $(@D)/mesc$(exe) -a src/mec$(exe) jasspa
 	rm -rf $(builddir)
+
 
 # JASSPA MicroEmacs from github
 apps += jasspa
-jasspa_version := 09.12.21
-jasspa_package := jasspa-mesrc-$(jasspa_version).tar.gz
+jasspa_version := 20250901
+jasspa_package_bundle := Jasspa_MicroEmacs_$(jasspa_version)_packages.zip
+jasspa_package_url := https://github.com/bjasspa/jasspa/releases/download/me_$(jasspa_version)/
+jasspa_package := me_$(jasspa_version).tar.gz
 
-jasspa: $(jasspa_package)
+jasspa: $(jasspa_package_bundle) $(jasspa_package)
+$(jasspa_package_bundle):
+	wget -c -O $@ $(jasspa_package_url)Jasspa_MicroEmacs_Latest_packages.zip
 $(jasspa_package):
-	wget -c -O $@ https://github.com/mittelmark/microemacs/archive/refs/tags/v$(jasspa_version).tar.gz
+	wget -c -O $@ https://github.com/bjasspa/jasspa/archive/refs/tags/$@
 
 apps += jasspa-install
 ifeq ($(wildcard ~/bin/.),)
@@ -413,17 +424,28 @@ endif
 jasspa-install: $(jasspa_bindir)/mec$(exe)| pre_install
 $(jasspa_bindir)/mec$(exe): builddir := $(shell mktemp -d --tmpdir jasspa-XXXXXXX)
 $(jasspa_bindir)/mec$(exe): $(jasspa_package)
-	$(untar) $(jasspa_package) -C $(builddir) --strip-components=1
-	patch -d $(builddir) -p1 < jasspa.patch
-	cd $(builddir) && rm -f bin/me* bin/bfs*
-	cd $(builddir)/src && ./build
-	cd $(builddir) && $(MAKE) me-bfs-bin
-	[ -f $(builddir)/bin/mec-linux.bin ] &&  install -D -m 755 $(builddir)/bin/mec-linux.bin $@ ||:
-	[ -f $(builddir)/bin/mec-windows.exe ] && install -D $(builddir)/bin/mec-windows.exe $@ ||:
-	test -f $@
-	-cp -f $(builddir)/bin/bfs* $(@D)
-	-cp -r --update=none $(builddir)/jasspa ~/.jasspa
+	$(untar) $(jasspa_package) -C $(builddir) --strip-components=2 --wildcards '*/microemacs'
+	cd $(builddir) && rm -f bin/*
+	cd $(builddir)/src && ./build.sh -t c
+	cp -v -t $(jasspa_bindir)/ $(builddir)/**/mec*
 	-rm -rf $(builddir)
+
+apps += jasspa-install-bfs
+jasspa-install-bfs_version := v09.12.25.beta2
+jasspa-install-bfs_package := jasspa-$(jasspa-install-bfs_version).zip
+jasspa-install-bfs_package_url := https://github.com/mittelmark/microemacs/archive/refs/tags/$(jasspa-install-bfs_version).zip
+
+$(jasspa-install-bfs_package):
+	wget -c -O $@ $(jasspa-install-bfs_package_url)
+
+jasspa-install-bfs: builddir := $(shell mktemp -d --tmpdir jasspa-XXXXXXX)
+jasspa-install-bfs: $(jasspa_package_bundle) $(jasspa_bindir)/mec$(exe) $(jasspa-install-bfs_package)
+	$(unzip) -q $(jasspa-install-bfs_package) -d $(builddir)
+	cd $(builddir)/microemacs-*/bfs && $(MAKE) && cp -v bfs$(exe) $(jasspa_bindir)
+	$(unzip) -q $(jasspa_package_bundle) -d $(builddir)
+	cd $(jasspa_bindir) && ./bfs -a mec$(exe) -o mesc$(exe) $(builddir)/packages/Jasspa_MicroEmacs_$(jasspa_version)_macros.tfs
+	-rm -rf $(builddir)
+	
 
 apps += phcl-microemacs
 phcl-microemacs_pkg := $(patsubst %,phcl-microemacs/%, MicroEmacs-4.21-0.0.src.rpm MicroEmacs-4.21-0.0.x86_64.rpm)
