@@ -389,16 +389,17 @@ endif
 jasspa2009-install: $(jasspa2009_bindir)/mec2009$(exe)
 $(jasspa2009_bindir)/mec2009$(exe): builddir := $(shell mktemp -d --tmpdir jasspa-XXXXXX)
 $(jasspa2009_bindir)/mec2009$(exe): $(jasspa2009_package)
+	rm -rf $(builddir)/*
 	$(unzip) -q $(jasspa2009_package) -d $(builddir)
-	cd $(builddir)/microemacs-master/bfs && CC=gcc $(MAKE) && install -m 755 -s bfs$(exe) $(@D)
+	cd $(builddir)/microemacs-master/bfs && CC=gcc $(MAKE) && install -v -m 755 -s bfs$(exe) $(@D)
 ifdef MSYSTEM
 	cd $(builddir)/microemacs-master/src && ./build -t c -m cygwin.gmk -D CONSOLE_LIBS=-lcurses
 else
 	cd $(builddir)/microemacs-master/src && ./build -t c
 endif
-	cd $(builddir)/microemacs-master/src && install -m 755 -s mec$(exe) $@
-	cd $(builddir)/microemacs-master && bfs/bfs$(exe) -o $(@D)/mesc$(exe) -a src/mec$(exe) jasspa
-	rm -rf $(builddir)
+	cd $(builddir)/microemacs-master/src && install -v -m 755 -s mec$(exe) $@
+	cd $(builddir)/microemacs-master && bfs/bfs$(exe) -o $(@D)/mesc2009$(exe) -a src/mec$(exe) jasspa
+	-rm -rf $(builddir)
 
 
 # JASSPA MicroEmacs from github
@@ -424,10 +425,11 @@ endif
 jasspa-install: $(jasspa_bindir)/mec$(exe)| pre_install
 $(jasspa_bindir)/mec$(exe): builddir := $(shell mktemp -d --tmpdir jasspa-XXXXXXX)
 $(jasspa_bindir)/mec$(exe): $(jasspa_package)
+	-rm -rf $(builddir)/*
 	$(untar) $(jasspa_package) -C $(builddir) --strip-components=2 --wildcards '*/microemacs'
 	cd $(builddir) && rm -f bin/*
 	cd $(builddir)/src && ./build.sh -t c
-	cp -v -t $(jasspa_bindir)/ $(builddir)/**/mec*
+	find $(builddir)/bin -type f -perm 755 |xargs cp -v -t $(jasspa_bindir)/
 	-rm -rf $(builddir)
 
 apps += jasspa-install-bfs
@@ -440,6 +442,7 @@ $(jasspa-install-bfs_package):
 
 jasspa-install-bfs: builddir := $(shell mktemp -d --tmpdir jasspa-XXXXXXX)
 jasspa-install-bfs: $(jasspa_package_bundle) $(jasspa_bindir)/mec$(exe) $(jasspa-install-bfs_package)
+	-rm -rf $(builddir)/*
 	$(unzip) -q $(jasspa-install-bfs_package) -d $(builddir)
 	cd $(builddir)/microemacs-*/bfs && $(MAKE) && cp -v bfs$(exe) $(jasspa_bindir)
 	$(unzip) -q $(jasspa_package_bundle) -d $(builddir)
