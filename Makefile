@@ -448,7 +448,7 @@ jasspa-install-bfs: $(jasspa_package_bundle) $(jasspa_bindir)/mec$(exe) $(jasspa
 	$(unzip) -q $(jasspa_package_bundle) -d $(builddir)
 	cd $(jasspa_bindir) && ./bfs -a mec$(exe) -o mesc$(exe) $(builddir)/packages/Jasspa_MicroEmacs_$(jasspa_version)_macros.tfs
 	-rm -rf $(builddir)
-	
+
 
 apps += phcl-microemacs
 phcl-microemacs_pkg := $(patsubst %,phcl-microemacs/%, MicroEmacs-4.21-0.0.src.rpm MicroEmacs-4.21-0.0.x86_64.rpm)
@@ -642,7 +642,7 @@ mg-install: $(mg_package)
 	cd $w && $(MAKE) install clean
 	rm -rf $t
 
-
+ifdef MSYSTEM
 apps += clisp
 clisp_desc = An ANSI Common Lisp
 clisp_version = 2.49
@@ -655,9 +655,10 @@ apps += clisp-install
 clisp-install: $(clisp_package)
 	case "$<" in *.zip) $(unzip) -d $(DESTDIR) $<;; *.tar.*) $(untar) $< -C $(DESTDIR);; esac
 	mkdir -p $(DESTDIR)/clisp-$(clisp_version)/bin
-	mv -v $(DESTDIR)/clisp-$(clisp_version)/clisp$(exe) $(DESTDIR)/clisp-$(clisp_version)/bin/
-	mv -v $(DESTDIR)/clisp-$(clisp_version)/clisp-link $(DESTDIR)/clisp-$(clisp_version)/bin/
-
+	echo -e '#!/bin/sh\n_t=$$(dirname $$(dirname $$(readlink -f "$$0")))\nexec $$_t/$$(basename "$$0") "$$@"' > $(DESTDIR)/clisp-$(clisp_version)/bin/clisp
+	cp -f $(DESTDIR)/clisp-$(clisp_version)/bin/clisp $(DESTDIR)/clisp-$(clisp_version)/bin/clisp-link
+	chmod +x -R $(DESTDIR)/clisp-$(clisp_version)/bin
+endif
 
 ## Add more here.
 
