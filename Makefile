@@ -395,10 +395,10 @@ $(jasspa2009_bindir)/mec2009$(exe): $(jasspa2009_package)
 ifdef MSYSTEM
 	cd $(builddir)/microemacs-master/src && ./build -t c -m cygwin.gmk -D CONSOLE_LIBS=-lcurses
 else
-	cd $(builddir)/microemacs-master/src && ./build -t c
+	cd $(builddir)/microemacs-master/src && /bin/make -f linux32gcc.gmk BTYP=c
 endif
-	cd $(builddir)/microemacs-master/src && install -v -m 755 -s mec$(exe) $@
-	cd $(builddir)/microemacs-master && bfs/bfs$(exe) -o $(@D)/mesc2009$(exe) -a src/mec$(exe) jasspa
+	cd $(builddir)/microemacs-master/src && find . -type f -name mec$(exe) -exec install -v -m 755 -s {} $@ \;
+	cd $(builddir)/microemacs-master && bfs/bfs$(exe) -o $(@D)/mesc2009$(exe) -a $@ jasspa
 	-rm -rf $(builddir)
 
 
