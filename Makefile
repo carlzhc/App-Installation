@@ -643,6 +643,22 @@ mg-install: $(mg_package)
 	rm -rf $t
 
 
+apps += clisp
+clisp_desc = An ANSI Common Lisp
+clisp_version = 2.49
+clisp_package = clisp-$(clisp_version)-win32-mingw-big.zip
+clisp: $(clisp_package)
+$(clisp_package):
+	wget -c -O $@ "https://master.dl.sourceforge.net/project/clisp/clisp/$(clisp_version)/$@?viasf=1"
+
+apps += clisp-install
+clisp-install: $(clisp_package)
+	case "$<" in *.zip) $(unzip) -d $(DESTDIR) $<;; *.tar.*) $(untar) $< -C $(DESTDIR);; esac
+	mkdir -p $(DESTDIR)/clisp-$(clisp_version)/bin
+	mv -v $(DESTDIR)/clisp-$(clisp_version)/clisp$(exe) $(DESTDIR)/clisp-$(clisp_version)/bin/
+	mv -v $(DESTDIR)/clisp-$(clisp_version)/clisp-link $(DESTDIR)/clisp-$(clisp_version)/bin/
+
+
 ## Add more here.
 
 
