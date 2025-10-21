@@ -1,9 +1,11 @@
 #!/usr/bin/make -f
 
 usage:
-	@echo "usage: make [target...]"
+	@echo "usage: make [target]"
+	@echo "       make [target]-install"
+	@echo
 	@echo "target:"
-	@printf "  %-24s%12s    %s\n" $(foreach app, $(apps), $(app) "$(value $(app)_version)" "$(value $(app)_desc)") | LC_ALL=C sort --version-sort
+	@printf "  %-24s%12s    %s\n" $(foreach app, $(filter-out %-install,$(apps)), $(app) "$(value $(app)_version)" "$(value $(app)_desc)") | LC_ALL=C sort --version-sort
 
 # Install destination prefix
 DESTDIR ?= ~/app
@@ -659,6 +661,34 @@ clisp-install: $(clisp_package)
 	cp -f $(DESTDIR)/clisp-$(clisp_version)/bin/clisp $(DESTDIR)/clisp-$(clisp_version)/bin/clisp-link
 	chmod +x -R $(DESTDIR)/clisp-$(clisp_version)/bin
 endif
+
+ifndef MSYSTEM
+apps += schemesh
+schemesh_version := v0.9.2
+schemesh_desc := A Unix shell and Lisp REPL, fused together.
+schemesh_package :=  schemesh-$(schemesh_version).tar.gz
+schemesh_builddir := $(patsubst %.tar.gz, %, $(schemesh_package))
+
+schemesh: $(schemesh_builddir)/schemesh
+$(schemesh_builddir)/schemesh: $(schemesh_package)
+	test -e "/usr/include/lz4.h" || { echo "E: package not installed: liblz4-dev"; exit 1; }
+	test -e "/usr/include/ncurses.h" || { echo "E: package not installed: libncurses-dev"; exit 1; }
+	test -e "/usr/include/uuid/uuid.h" || { echo "E: package not installed: uuid-dev"; exit 1; }
+	test -e "/usr/include/zlib.h" || { echo "E: package not installed: zlib1g-dev"; exit 1; }
+	test -e "/usr/share/doc/chezscheme-dev/NOTICE" || { echo "E: package not installed:  chezscheme-dev"; exit 1; }
+	rm -rf $(schemesh_builddir)
+	mkdir -p $(schemesh_builddir)
+	$(untar) $< -C $(schemesh_builddir) --strip-components=1
+	cd $(schemesh_builddir) && $(MAKE) CC='gcc -fno-lto'
+
+$(schemesh_package):
+	wget -c -O $@ "https://github.com/cosmos72/schemesh/archive/refs/tags/$(schemesh_version).tar.gz"
+
+schemesh-install: $(schemesh_builddir)/schemesh
+	cd $(schemesh_builddir) && $(MAKE) install prefix=$(DESTDIR)
+	-rm -rf $(schemesh_builddir)
+endif
+
 
 ## Add more here.
 
