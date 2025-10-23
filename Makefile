@@ -157,14 +157,19 @@ $(fpm): $(truffleruby_bin)
 
 
 # Clojure
+apps += clojure
+clojure_desc := Clojure is a robust, and fast prograamming language.
+clojure_version := latest
+clojure:
+	@echo Please run $(MAKE) clojure-install to install Clojure
+
 apps += clojure-install
-clojure-install_version = 1.12.2.1571
 clojure-install_desc = Install the latest version of clojure.
 clojure-install:
-	ver=`curl -sSf https://api.github.com/repos/clojure/brew-install/releases/latest | jq -r '.tag_name'`; \
-	if [[ $${ver} != $(clojure-install_version) ]]; then \
-	    echo "-- New release found: $${ver}"; fi
-	curl -L -O https://github.com/clojure/brew-install/releases/download/$(clojure-install_version)/linux-install.sh
+	@ver=`curl -sSf https://api.github.com/repos/clojure/brew-install/releases/latest | jq -r '.tag_name'`; \
+	if [[ $${ver} != $(clojure_version) ]]; then \
+	    echo "-- New release found: $${ver}"; fi; \
+	curl -sSkf -L -O https://github.com/clojure/brew-install/releases/download/$${ver}/linux-install.sh
 	chmod +x linux-install.sh
 	./linux-install.sh --prefix $(DESTDIR)/clojure
 
