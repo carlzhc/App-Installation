@@ -1,4 +1,5 @@
 #!/usr/bin/make -f
+SHELL := /bin/bash
 
 usage:
 	@echo "usage: make [target]"
@@ -686,6 +687,7 @@ $(schemesh_package):
 
 schemesh-install: $(schemesh_builddir)/schemesh
 	cd $(schemesh_builddir) && $(MAKE) install prefix=$(DESTDIR)
+	$(DESTDIR)/bin/schemesh -e 1
 	-rm -rf $(schemesh_builddir)
 endif
 
