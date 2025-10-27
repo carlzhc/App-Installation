@@ -611,7 +611,7 @@ define venice_launcher =
 
 REPL_HOME=~/app/venice
 if [[ $$@ ]]; then
-    exec java -jar $$REPL_HOME/libs/$(venice_package) "$$@"
+    exec java -jar $$REPL_HOME/libs/$(venice_package) -file "$$@"
 else
     cd $$REPL_HOME && exec ./repl.sh
 fi
