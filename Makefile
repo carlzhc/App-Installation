@@ -632,6 +632,22 @@ ifdef MSYSTEM
 	unzip -p $< com/github/jlangch/venice/setup/repl.unix.env > $(DESTDIR)/repl.env
 endif
 
+apps += venice-standalone
+venice-standalone_desc = Venice standalone jar.
+venice-standalone_version := $(venice_version)
+venice-standalone: wd := $(shell mktemp -d)
+venice-standalone: venice-standalone-$(venice_version).jar
+venice-standalone-1.12.58.jar: venice-standalone-pom.xml.m4
+	cp -t $(wd) $<
+	m4 -Dm4_VERSION=$(venice_version) $(wd)/$< | tee $(wd)/pom.xml
+	mvn -B -f $(wd) package
+	cp -f $(wd)/target/$@ .
+	-rm -rf $(wd)
+
+apps += venice-standalone-install
+venice-standalone-install: venice-standalone
+	cp -vf venice-standalone-$(venice_version).jar $(DESTDIR)/bin
+
 apps += mg
 mg_desc = OpenBSD Mg editor.
 mg_version = latest
