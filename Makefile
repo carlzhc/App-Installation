@@ -713,6 +713,23 @@ schemesh-install: $(schemesh_builddir)/schemesh
 endif
 
 
+apps += closh
+closh_desc = Bash-like shell based on Clojure
+closh_version = 0.5.0
+closh_package = closh-zero.jar
+closh: $(closh_package)
+$(closh_package):
+	wget -c -O $@ "https://github.com/dundalek/closh/releases/download/v${closh_version}/$(closh_package)"
+
+
+apps += closh-install
+closh-install: DESTDIR = ~
+closh-install: $(closh_package)
+	install -D -t $(DESTDIR)/bin $<
+	echo -e '#!/usr/bin/sh\nexec java -jar $(DESTDIR)/bin/$< "$$@"' > $(DESTDIR)/bin/closh
+	chmod +x $(DESTDIR)/bin/closh
+
+
 ## Add more here.
 
 
