@@ -171,7 +171,8 @@ clojure-install:
 	    echo "-- New release found: $${ver}"; fi; \
 	curl -sSkf -L -O https://github.com/clojure/brew-install/releases/download/$${ver}/linux-install.sh
 	chmod +x linux-install.sh
-	./linux-install.sh --prefix $(DESTDIR)/clojure
+	if [ `whoami` = root ]; then dest=/usr/local; else dest=$(DESTDIR)/clojure; fi; \
+	./linux-install.sh --prefix $$dest && rm -f ./linux-install.sh
 
 
 # clj-kondo
