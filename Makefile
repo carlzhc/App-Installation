@@ -413,7 +413,7 @@ endif
 
 # JASSPA MicroEmacs from github
 apps += jasspa
-jasspa_version := 20250901
+jasspa_version := 20251101
 jasspa_package_bundle := Jasspa_MicroEmacs_$(jasspa_version)_packages.zip
 jasspa_package_url := https://github.com/bjasspa/jasspa/releases/download/me_$(jasspa_version)/
 jasspa_package := me_$(jasspa_version).tar.gz
@@ -600,7 +600,7 @@ endif
 
 apps += venice
 venice_desc = Venice, a Clojure inspired sandboxed as a safe scripting language.
-venice_version = 1.12.58
+venice_version = 1.12.72
 venice_package = venice-$(venice_version).jar
 venice: $(venice_package)
 $(venice_package):
@@ -638,7 +638,7 @@ venice-standalone_desc = Venice standalone jar.
 venice-standalone_version := $(venice_version)
 venice-standalone: wd := $(shell mktemp -d)
 venice-standalone: venice-standalone-$(venice_version).jar
-venice-standalone-1.12.58.jar: venice-standalone-pom.xml.m4
+venice-standalone-$(venice_version).jar: venice-standalone-pom.xml.m4
 	cp -t $(wd) $<
 	m4 -Dm4_VERSION=$(venice_version) $(wd)/$< | tee $(wd)/pom.xml
 	mvn -B -f $(wd) package
