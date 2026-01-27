@@ -159,7 +159,7 @@ $(fpm): $(truffleruby_bin)
 # Clojure
 apps += clojure
 clojure_desc := Clojure is a robust, and fast prograamming language.
-clojure_version := latest
+clojure_version := $(shell (clojure --version || echo "latest") | awk '{print $$NF}')
 clojure:
 	@echo Please run $(MAKE) clojure-install to install Clojure
 
@@ -168,11 +168,13 @@ clojure-install_desc = Install the latest version of clojure.
 clojure-install:
 	@ver=`curl -sSf https://api.github.com/repos/clojure/brew-install/releases/latest | jq -r '.tag_name'`; \
 	if [[ $${ver} != $(clojure_version) ]]; then \
-	    echo "-- New release found: $${ver}"; fi; \
+	    echo "-- New release found: $${ver}"; \
+	else echo "-- Already installed the Latest version: $${ver}"; exit 1; fi; \
 	curl -sSkf -L -O https://github.com/clojure/brew-install/releases/download/$${ver}/linux-install.sh
 	chmod +x linux-install.sh
 	if [ `whoami` = root ]; then dest=/usr/local; else dest=$(DESTDIR)/clojure; fi; \
-	./linux-install.sh --prefix $$dest && rm -f ./linux-install.sh
+	./linux-install.sh --prefix $$dest && rm -f ./linux-install.sh; \
+	$$dest/bin/clj --version
 
 
 # clj-kondo
