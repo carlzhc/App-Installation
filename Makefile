@@ -159,7 +159,8 @@ $(fpm): $(truffleruby_bin)
 # Clojure
 apps += clojure
 clojure_desc := Clojure is a robust, and fast prograamming language.
-clojure_version := $(shell (clojure --version || echo "latest") | awk '{print $$NF}')
+clojure_version := latest
+clojure_current_version := $(shell clojure --version 2>/dev/null | awk '{print $$NF}')
 clojure:
 	@echo Please run $(MAKE) clojure-install to install Clojure
 
@@ -167,7 +168,7 @@ apps += clojure-install
 clojure-install_desc = Install the latest version of clojure.
 clojure-install:
 	@ver=`curl -sSf https://api.github.com/repos/clojure/brew-install/releases/latest | jq -r '.tag_name'`; \
-	if [[ $${ver} != $(clojure_version) ]]; then \
+	if [[ $${ver} != $(clojure_current_version) ]]; then \
 	    echo "-- New release found: $${ver}"; \
 	else echo "-- Already installed the Latest version: $${ver}"; exit 1; fi; \
 	curl -sSkf -L -O https://github.com/clojure/brew-install/releases/download/$${ver}/linux-install.sh
