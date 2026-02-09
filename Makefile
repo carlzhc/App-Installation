@@ -603,7 +603,7 @@ endif
 
 apps += venice
 venice_desc = Venice, a Clojure inspired sandboxed as a safe scripting language.
-venice_version = 1.12.72
+venice_version = 1.12.78
 venice_package = venice-$(venice_version).jar
 venice: $(venice_package)
 $(venice_package):
@@ -627,6 +627,7 @@ apps += venice-install
 venice-install: DESTDIR := $(DESTDIR)/venice
 venice-install: $(venice_package)
 	mkdir -p $(DESTDIR)/bin
+	rm -f $(DESTDIR)/libs/venice-*.jar
 	java -jar $< -setup -colors-dark -dir $(DESTDIR)
 	printf "%s\n" "$$venice_launcher" | tee $(DESTDIR)/bin/venice
 	chmod +x $(DESTDIR)/bin/venice
