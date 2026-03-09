@@ -545,7 +545,7 @@ endif
 
 
 apps += github_cli
-github_cli_version := 2.76.2
+github_cli_version := 2.87.3
 ifeq ($(uname_os), Msys)
 github_cli_package := gh_$(github_cli_version)_windows_$(arch).zip
 else
@@ -557,6 +557,7 @@ $(github_cli_package):
 	wget -c -O $@ https://github.com/cli/cli/releases/download/v$(github_cli_version)/$(github_cli_package)
 
 apps += github_cli-install
+github_cli-install: DESTDIR := $(DESTDIR)/github
 github_cli-install: $(github_cli_package)
 	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR);; *.tar.*) $(untar) $< -C $(DESTDIR);; esac
 
@@ -645,7 +646,7 @@ venice-install: $(venice_package)
 	chmod +x $(DESTDIR)/bin/venice
 ifdef MSYSTEM
 	rm -f $(DESTDIR)/repl.*
-	unzip -p $< com/github/jlangch/venice/setup/repl.sh | sed -e 's!{{INSTALL_PATH}}!$(DESTDIR)!' -e '/-cp /s!libs:!!' > $(DESTDIR)/repl.sh
+	unzip -p $< com/github/jlangch/venice/setup/repl.sh | sed -e 's!{{INSTALL_PATH}}!$(DESTDIR)!' -e '/-cp /s!libs:!libs;!' -e 's/-colors$$/-colors-dark/' > $(DESTDIR)/repl.sh
 	unzip -p $< com/github/jlangch/venice/setup/repl.unix.env > $(DESTDIR)/repl.env
 endif
 
