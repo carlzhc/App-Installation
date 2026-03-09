@@ -6,7 +6,7 @@ usage:
 	@echo "       make [target]-install"
 	@echo
 	@echo "target:"
-	@printf "  %-24s%12s    %s\n" $(foreach app, $(filter-out %-install,$(apps)), $(app) "$(value $(app)_version)" "$(value $(app)_desc)") | LC_ALL=C sort --version-sort
+	@printf "  %-24s%16s    %s\n" $(foreach app, $(filter-out %-install,$(apps)), $(app) "$(value $(app)_version)" "$(value $(app)_desc)") | LC_ALL=C sort --version-sort
 
 # Install destination prefix
 DESTDIR ?= ~/app
@@ -71,7 +71,7 @@ pre_install: .pre_install.done
 
 # JDK
 apps += openlogic_jdk8
-openlogic_jdk8_version := 8u422-b05
+openlogic_jdk8_version := 8u482-b08
 openlogic_jdk8_package := openlogic-openjdk-$(openlogic_jdk8_version)-$(os)-x64$(ext)
 openlogic_jdk8: $(openlogic_jdk8_package)
 $(openlogic_jdk8_package):
@@ -83,7 +83,7 @@ openlogic_jdk8-install: $(openlogic_jdk8_package)
 
 
 apps += openlogic_jdk11
-openlogic_jdk11_version := 11.0.24+8
+openlogic_jdk11_version := 11.0.30+7
 openlogic_jdk11_package := openlogic-openjdk-$(openlogic_jdk11_version)-$(os)-x64$(ext)
 openlogic_jdk11: $(openlogic_jdk11_package)
 $(openlogic_jdk11_package):
@@ -94,7 +94,7 @@ openlogic_jdk11-install: $(openlogic_jdk11_package)
 	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR);; *.tar.*) $(untar) $< -C $(DESTDIR);; esac
 
 apps += openlogic_jdk17
-openlogic_jdk17_version := 17.0.12+7
+openlogic_jdk17_version := 17.0.18+8
 openlogic_jdk17_package := openlogic-openjdk-$(openlogic_jdk17_version)-$(os)-x64$(ext)
 openlogic_jdk17: $(openlogic_jdk17_package)
 $(openlogic_jdk17_package):
@@ -105,7 +105,7 @@ openlogic_jdk17-install: $(openlogic_jdk17_package)
 	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR);; *.tar.*) $(untar) $< -C $(DESTDIR);; esac
 
 apps += openlogic_jdk21
-openlogic_jdk21_version := 21.0.4+7
+openlogic_jdk21_version := 21.0.10+7
 openlogic_jdk21_package := openlogic-openjdk-$(openlogic_jdk21_version)-$(os)-x64$(ext)
 openlogic_jdk21: $(openlogic_jdk21_package)
 $(openlogic_jdk21_package):
@@ -168,7 +168,7 @@ apps += clojure-install
 clojure-install_desc = Install the latest version of clojure.
 clojure-install:
 	@ver=`curl -sSf https://api.github.com/repos/clojure/brew-install/releases/latest | jq -r '.tag_name'`; \
-	if [[ $${ver} != $(clojure_current_version) ]]; then \
+	if [[ $${ver} != "$(clojure_current_version)" ]]; then \
 	    echo "-- New release found: $${ver}"; \
 	else echo "-- Already installed the Latest version: $${ver}"; exit 1; fi; \
 	curl -sSkf -L -O https://github.com/clojure/brew-install/releases/download/$${ver}/linux-install.sh
@@ -197,7 +197,8 @@ clj-kondo-install: $(clj-kondo_package)
 
 # JRuby https://repo1.maven.org/maven2/org/jruby/jruby-dist/
 apps += jruby
-jruby_version := 9.4.8.0
+jruby_desc := The Ruby Programming Language on the JVM
+jruby_version := 10.0.4.0
 jruby_package := jruby-dist-$(jruby_version)-bin.tar.gz
 jruby: $(jruby_package)
 $(jruby_package):
@@ -210,6 +211,7 @@ jruby-install: $(jruby_package)
 
 # JRuby-Complete
 apps += jruby_complete
+jruby_complete_desc := The standalone version of JRuby
 jruby_complete_version := $(jruby_version)
 jruby_complete_package := jruby-complete-$(jruby_complete_version).jar
 jruby_complete: $(jruby_complete_package)
@@ -306,7 +308,7 @@ ifdef MSYSTEM
 graalvm-install: vswhere='/c/Program Files (x86)/Microsoft Visual Studio/Installer/vswhere.exe'
 graalvm-install: $(graalvm_package)
 	unzip $< -d ~/app/
-	if [[ -x $(vswhere) ]]; then \
+	if [[ -x "$(vswhere)" ]]; then \
 	  instdir="`$(vswhere) -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`"; \
 	  if [[ $$instdir ]]; then \
 	    (echo -e '2\ni'; echo -E "call \"$$instdir\VC\Auxiliary\Build\vcvars64.bat\""; echo -e '.\nw!\nq') | ex  ~/app/graalvm-jdk-$(graalvm_version)*/bin/native-image.cmd; \
@@ -327,13 +329,22 @@ $(graalvm_rpm): $(graalvm_package) $(fpm)
 	$(fpm) -s tar -t rpm -n graalvm-jdk -a $(graalvm_arch) --prefix $(DESTDIR) $<
 
 
-# leininage
+# leiningen
 apps += leiningen
+leiningen_version := stable
+leiningen_desc := For automating Clojure projects without setting your hair on fire
 leiningen: lein.zip
 lein.zip:
 	wget -c https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein
 	chmod +x lein
 	zip --move --test $@ lein
+
+
+apps += leiningen-install
+leiningen-install: DESTDIR := ~/bin
+leiningen-install: lein.zip
+	mkdir -p $(DESTDIR)
+	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR);; *.tar.*) $(untar) $< -C $(DESTDIR) --skip-old-files;; esac
 
 
 # Bitwarden Cli
@@ -552,6 +563,7 @@ github_cli-install: $(github_cli_package)
 
 apps += aichat
 aichat_version := v0.30.0
+aichat_desc := All-in-one LLM CLI tool
 ifeq ($(uname_os), Msys)
 aichat_package := aichat-$(aichat_version)-x86_64-pc-windows-msvc.zip
 else
@@ -603,7 +615,7 @@ endif
 
 apps += venice
 venice_desc = Venice, a Clojure inspired sandboxed as a safe scripting language.
-venice_version = 1.12.81
+venice_version = 1.12.83
 venice_package = venice-$(venice_version).jar
 venice: $(venice_package)
 $(venice_package):
