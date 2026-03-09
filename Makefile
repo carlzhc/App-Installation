@@ -249,11 +249,16 @@ maven-rpm: $(maven-rpm_file)
 
 # Warbler
 apps += warbler
-warbler_version := 2.0.5
+warbler_version := 2.1.0
 warbler_package := warbler-$(warbler_version).tar.gz
 warbler: $(warbler_package)
 $(warbler_package):
 	wget -c -O $@ https://github.com/jruby/warbler/archive/refs/tags/v$(warbler_version).tar.gz
+
+
+apps += warbler-install
+warbler-install: $(warbler_package)
+	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR);; *.tar.*) $(untar) $< -C $(DESTDIR);; esac
 
 
 # TinyGo https://github.com/tinygo-org/tinygo/releases
