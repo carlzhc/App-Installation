@@ -228,7 +228,7 @@ jruby_complete-install: ~/bin/$(jruby_complete_package)
 
 # Maven
 apps += maven
-maven_version := 3.9.11
+maven_version := 3.9.12
 maven_package := apache-maven-$(maven_version)-bin$(ext)
 maven: $(maven_package)
 $(maven_package):
