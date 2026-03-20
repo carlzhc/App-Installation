@@ -621,7 +621,7 @@ endif
 
 apps += venice
 venice_desc = Venice, a Clojure inspired sandboxed as a safe scripting language.
-venice_version = 1.12.83
+venice_version = 1.12.85
 venice_package = venice-$(venice_version).jar
 venice: $(venice_package)
 $(venice_package):
