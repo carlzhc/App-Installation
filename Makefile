@@ -742,7 +742,7 @@ closh_version = 0.5.0
 closh_package = closh-zero.jar
 closh: $(closh_package)
 $(closh_package):
-	wget -c -O $@ "https://github.com/dundalek/closh/releases/download/v${closh_version}/$(closh_package)"
+	wget -c -O $@ "https://github.com/dundalek/closh/releases/download/v$(closh_version)/$(closh_package)"
 
 
 apps += closh-install
@@ -752,6 +752,32 @@ closh-install: $(closh_package)
 	echo -e '#!/usr/bin/sh\nexec java -jar $(DESTDIR)/bin/$< "$$@"' > $(DESTDIR)/bin/closh
 	chmod +x $(DESTDIR)/bin/closh
 
+
+apps += gopass
+gopass_desc = The slightly more awesome standard unix password manager for teams
+gopass_version = 1.16.1
+gopass_package = gopass-$(gopass_version)-$(os)-amd64.zip
+gopass: $(gopass_package)
+$(gopass_package):
+	wget -c -O $@ "https://github.com/gopasspw/gopass/releases/download/v$(gopass_version)/$(gopass_package)"
+
+gopass-install: DESTDIR := $(DESTDIR)/gopass/bin
+gopass-install: $(gopass_package)
+	mkdir -p $(DESTDIR)
+	case "$<" in *.zip) $(unzip) -d $(DESTDIR) $<;; *.tar.*) $(untar) $< -C $(DESTDIR);; esac
+
+apps += git-credential-gopass
+git-credential-gopass_desc = Gopass git-credentials helper
+git-credential-gopass_version = 1.16.1
+git-credential-gopass_package = git-credential-gopass-$(git-credential-gopass_version)-$(os)-amd64.zip
+git-credential-gopass: $(git-credential-gopass_package)
+$(git-credential-gopass_package):
+	wget -c -O $@ "https://github.com/gopasspw/git-credential-gopass/releases/download/v$(git-credential-gopass_version)/$(git-credential-gopass_package)"
+
+git-credential-gopass-install: DESTDIR := $(DESTDIR)/gopass/bin
+git-credential-gopass-install: $(git-credential-gopass_package)
+	mkdir -p $(DESTDIR)
+	case "$<" in *.zip) $(unzip) -d $(DESTDIR) $<;; *.tar.*) $(untar) $< -C $(DESTDIR);; esac
 
 ## Add more here.
 
