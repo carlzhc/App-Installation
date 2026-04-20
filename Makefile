@@ -621,7 +621,7 @@ endif
 
 apps += venice
 venice_desc = Venice, a Clojure inspired sandboxed as a safe scripting language.
-venice_version = 1.12.85
+venice_version = 1.12.89
 venice_package = venice-$(venice_version).jar
 venice: $(venice_package)
 $(venice_package):
@@ -633,7 +633,7 @@ define venice_launcher =
 
 REPL_HOME=~/app/venice
 if [[ $$@ ]]; then
-    exec java -jar $$REPL_HOME/libs/$(venice_package) -file "$$@"
+    exec java -jar $$REPL_HOME/libs/$(venice_package) "$$@"
 else
     cd $$REPL_HOME && exec ./repl.sh
 fi
