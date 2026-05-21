@@ -69,7 +69,7 @@ pre_install: .pre_install.done
 	sudo dnf -y install redhat-lsb-core
 
 
-# JDK
+# JDK openlogic openjdk: https://www.openlogic.com/openjdk-downloads
 apps += openlogic_jdk8
 openlogic_jdk8_version := 8u482-b08
 openlogic_jdk8_package := openlogic-openjdk-$(openlogic_jdk8_version)-$(os)-x64$(ext)
@@ -621,7 +621,7 @@ endif
 
 apps += venice
 venice_desc = Venice, a Clojure inspired sandboxed as a safe scripting language.
-venice_version = 1.12.89
+venice_version = 1.13.5
 venice_package = venice-$(venice_version).jar
 venice: $(venice_package)
 $(venice_package):
@@ -637,7 +637,7 @@ if [[ $$@ ]]; then
 else
     cd $$REPL_HOME && exec ./repl.sh
 fi
-
+OA
 endef
 export venice_launcher
 
@@ -651,8 +651,10 @@ venice-install: $(venice_package)
 	chmod +x $(DESTDIR)/bin/venice
 ifdef MSYSTEM
 	rm -f $(DESTDIR)/repl.*
-	unzip -p $< com/github/jlangch/venice/setup/repl.sh | sed -e 's!{{INSTALL_PATH}}!$(DESTDIR)!' -e '/-cp /s!libs:!libs;!' -e 's/-colors$$/-colors-dark/' > $(DESTDIR)/repl.sh
-	unzip -p $< com/github/jlangch/venice/setup/repl.unix.env > $(DESTDIR)/repl.env
+	unzip -p $< com/github/jlangch/venice/setup/repl.sh | \
+	  sed -e 's!{{INSTALL_PATH}}!$(DESTDIR)!' -e '/-cp /s!libs:!libs;!' > $(DESTDIR)/repl.sh
+	unzip -p $< com/github/jlangch/venice/setup/repl.unix.env | \
+	  sed -e 's/COLOR_MODE=light/COLOR_MODE=dark/' > $(DESTDIR)/repl.env
 endif
 
 apps += venice-standalone
