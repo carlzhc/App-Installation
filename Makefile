@@ -198,7 +198,7 @@ clj-kondo-install: $(clj-kondo_package)
 # JRuby https://repo1.maven.org/maven2/org/jruby/jruby-dist/
 apps += jruby
 jruby_desc := The Ruby Programming Language on the JVM
-jruby_version := 10.0.4.0
+jruby_version := 10.1.0.0
 jruby_package := jruby-dist-$(jruby_version)-bin.tar.gz
 jruby: $(jruby_package)
 $(jruby_package):
@@ -364,7 +364,7 @@ bw$(ext):
 
 # Babashka https://github.com/babashka/babashka/releases
 apps += babashka
-babashka_version := 1.12.210
+babashka_version := 1.12.218
 
 ifeq ($(os), linux)
 babashka_package := babashka-$(babashka_version)-$(os)-$(arch)-static$(ext)
@@ -488,7 +488,7 @@ $(phcl-microemacs_pkg):
 
 ## Raku, Perl 6.
 apps += rakudo
-rakudo_version := 2024.06-01
+rakudo_version := 2026.05-01
 ifneq ($(MSYSTEM),)
 rakudo_package := rakudo-moar-$(rakudo_version)-win-x86_64-msvc.zip
 else
@@ -621,7 +621,7 @@ endif
 
 apps += venice
 venice_desc = Venice, a Clojure inspired sandboxed as a safe scripting language.
-venice_version = 1.13.5
+venice_version = 1.13.6
 venice_package = venice-$(venice_version).jar
 venice: $(venice_package)
 $(venice_package):
@@ -637,7 +637,6 @@ if [[ $$@ ]]; then
 else
     cd $$REPL_HOME && exec ./repl.sh
 fi
-OA
 endef
 export venice_launcher
 
