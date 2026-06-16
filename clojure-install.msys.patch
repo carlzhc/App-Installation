@@ -1,0 +1,21 @@
+--- bin/clojure.orig
++++ bin/clojure
+@@ -270,7 +270,8 @@
+ fi
+ 
+ # Set tools classpath used for the various programs before the user's program
+-tools_cp="$install_dir/libexec/clojure-tools-$version.jar"
++tools_cp="$(cygpath -w $install_dir/libexec/clojure-tools-$version.jar)"
++exec_cp="$(cygpath -w $install_dir/libexec/exec.jar)"
+ 
+ # Determine user config directory
+ if [[ -n "$CLJ_CONFIG" ]]; then
+@@ -490,7 +491,7 @@
+   fi
+ 
+   if [ "$mode" == "tool" ] || [ "$mode" == "exec" ]; then
+-    exec "$JAVA_CMD" -XX:-OmitStackTraceInFastThrow $JAVA_OPTS "${jvm_cache_opts[@]}" "${jvm_opts[@]}" "-Dclojure.basis=$basis_file" -classpath "$cp:$install_dir/libexec/exec.jar" clojure.main -m clojure.run.exec "$@"
++    exec "$JAVA_CMD" -XX:-OmitStackTraceInFastThrow $JAVA_OPTS "${jvm_cache_opts[@]}" "${jvm_opts[@]}" "-Dclojure.basis=$basis_file" -classpath "$cp;$exec_cp" clojure.main -m clojure.run.exec "$@"
+   else
+     if [[ -f "$main_file" ]]; then
+       set +e

@@ -167,14 +167,16 @@ clojure:
 apps += clojure-install
 clojure-install_desc = Install the latest version of clojure.
 clojure-install:
-	@ver=`curl -sSf https://api.github.com/repos/clojure/brew-install/releases/latest | jq -r '.tag_name'`; \
+	@set +x; \
+	ver=`curl -sSf https://api.github.com/repos/clojure/brew-install/releases/latest | jq -r '.tag_name'`; \
 	if [[ $${ver} != "$(clojure_current_version)" ]]; then \
 	    echo "-- New release found: $${ver}"; \
 	else echo "-- Already installed the Latest version: $${ver}"; exit 1; fi; \
-	curl -sSkf -L -O https://github.com/clojure/brew-install/releases/download/$${ver}/linux-install.sh
-	chmod +x linux-install.sh
+	curl -sSkf -L -O https://github.com/clojure/brew-install/releases/download/$${ver}/linux-install.sh; \
+	chmod +x linux-install.sh; \
 	if [ `whoami` = root ]; then dest=/usr/local; else dest=$(DESTDIR)/clojure; fi; \
 	./linux-install.sh --prefix $$dest && rm -f ./linux-install.sh; \
+	test -n "$$MSYSTEM" && patch -d $$dest --strip 0 --forward --batch <$@.msys.patch; \
 	$$dest/bin/clj --version
 
 
