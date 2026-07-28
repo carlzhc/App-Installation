@@ -282,7 +282,7 @@ $(DESTDIR)/tinygo/lib/musl/COPYRIGHT: $(tinygo_package)
 
 # Golang https://go.dev/dl/
 apps += golang
-golang_version := 1.24.4
+golang_version := 1.26.5
 golang_package := go$(golang_version).$(os)-$(arch)$(ext)
 
 golang: $(golang_package)
