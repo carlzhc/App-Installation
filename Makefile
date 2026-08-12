@@ -2,8 +2,8 @@
 SHELL := /bin/bash
 
 usage:
-	@echo "usage: make [target]"
-	@echo "       make [target]-install"
+	@echo "usage: make <target>"
+	@echo "       make <target>-install [DESTDIR=~/app] [PREFIX=/<name>]"
 	@echo
 	@echo "target:"
 	@printf "  %-24s%16s    %s\n" $(foreach app, $(filter-out %-install,$(apps)), $(app) "$(value $(app)_version)" "$(value $(app)_desc)") | LC_ALL=C sort --version-sort
@@ -166,6 +166,7 @@ clojure:
 
 apps += clojure-install
 clojure-install_desc = Install the latest version of clojure.
+clojure-install: PREFIX ?= /clojure
 clojure-install:
 	@set +x; \
 	ver=`curl -sSf https://api.github.com/repos/clojure/brew-install/releases/latest | jq -r '.tag_name'`; \
@@ -174,7 +175,7 @@ clojure-install:
 	else echo "-- Already installed the Latest version: $${ver}"; exit 1; fi; \
 	curl -sSkf -L -O https://github.com/clojure/brew-install/releases/download/$${ver}/linux-install.sh; \
 	chmod +x linux-install.sh; \
-	if [ `whoami` = root ]; then dest=/usr/local; else dest=$(DESTDIR)/clojure; fi; \
+	dest=$(DESTDIR)$(PREFIX); \
 	./linux-install.sh --prefix $$dest && rm -f ./linux-install.sh; \
 	test -n "$$MSYSTEM" && patch -d $$dest --strip 0 --forward --batch <$@.msys.patch; \
 	$$dest/bin/clj --version
@@ -643,19 +644,20 @@ endef
 export venice_launcher
 
 apps += venice-install
-venice-install: DESTDIR := $(DESTDIR)/venice
+venice-install: PREFIX ?= /venice
+venice-install: TOPDIR = $(DESTDIR)$(PREFIX)
 venice-install: $(venice_package)
-	mkdir -p $(DESTDIR)/bin
-	rm -f $(DESTDIR)/libs/venice-*.jar
-	java -jar $< -setup -colors-dark -dir $(DESTDIR)
-	printf "%s\n" "$$venice_launcher" | tee $(DESTDIR)/bin/venice
-	chmod +x $(DESTDIR)/bin/venice
+	mkdir -p $(TOPDIR)/bin
+	rm -f $(TOPDIR)/libs/venice-*.jar
+	java -jar $< -setup -colors-dark -dir $(TOPDIR)
+	printf "%s\n" "$$venice_launcher" | tee $(TOPDIR)/bin/venice
+	chmod +x $(TOPDIR)/bin/venice
 ifdef MSYSTEM
-	rm -f $(DESTDIR)/repl.*
+	rm -f $(TOPDIR)/repl.*
 	unzip -p $< com/github/jlangch/venice/setup/repl.sh | \
-	  sed -e 's!{{INSTALL_PATH}}!$(DESTDIR)!' -e '/-cp /s!libs:!libs;!' > $(DESTDIR)/repl.sh
+	  sed -e 's!{{INSTALL_PATH}}!$(TOPDIR)!' -e '/-cp /s!libs:!libs;!' > $(TOPDIR)/repl.sh
 	unzip -p $< com/github/jlangch/venice/setup/repl.unix.env | \
-	  sed -e 's/COLOR_MODE=light/COLOR_MODE=dark/' > $(DESTDIR)/repl.env
+	  sed -e 's/COLOR_MODE=light/COLOR_MODE=dark/' > $(TOPDIR)/repl.env
 endif
 
 apps += venice-standalone
