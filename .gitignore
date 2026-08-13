@@ -1,7 +1,9 @@
+*~
+.*
 *.gz
-*.zip
 *.jar
 *.rpm
-.*
-*~
+*.tar
+*.zip
 linux-install.sh
+lein
