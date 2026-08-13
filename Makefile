@@ -37,7 +37,7 @@ ext := .tar.gz
 endif
 
 unzip := unzip -DD -n
-untar := tar -xamf
+untar := bsdtar -xmf
 
 arch := $(shell uname -m)
 ifeq ($(arch), x86_64)
@@ -78,8 +78,9 @@ $(openlogic_jdk8_package):
 	wget -c https://builds.openlogic.com/downloadJDK/openlogic-openjdk/$(openlogic_jdk8_version)/$@
 
 apps += openlogic_jdk8-install
+openlogic_jdk8-install: PREFIX ?= /openlogic_jdk8
 openlogic_jdk8-install: $(openlogic_jdk8_package)
-	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR);; *.tar.*) $(untar) $< -C $(DESTDIR);; esac
+	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR)$(PREFIX);; *.tar.*) $(untar) $< -C $(DESTDIR)$(PREFIX);; esac
 
 
 apps += openlogic_jdk11
@@ -90,8 +91,9 @@ $(openlogic_jdk11_package):
 	wget -c https://builds.openlogic.com/downloadJDK/openlogic-openjdk/$(openlogic_jdk11_version)/$@
 
 apps += openlogic_jdk11-install
+openlogic_jdk11-install: PREFIX ?= /openlogic_jdk11
 openlogic_jdk11-install: $(openlogic_jdk11_package)
-	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR);; *.tar.*) $(untar) $< -C $(DESTDIR);; esac
+	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR)$(PREFIX);; *.tar.*) $(untar) $< -C $(DESTDIR)$(PREFIX);; esac
 
 apps += openlogic_jdk17
 openlogic_jdk17_version := 17.0.18+8
@@ -101,8 +103,9 @@ $(openlogic_jdk17_package):
 	wget -c https://builds.openlogic.com/downloadJDK/openlogic-openjdk/$(openlogic_jdk17_version)/$@
 
 apps += openlogic_jdk17-install
+openlogic_jdk17-install: PREFIX ?= /openlogic_jdk17
 openlogic_jdk17-install: $(openlogic_jdk17_package)
-	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR);; *.tar.*) $(untar) $< -C $(DESTDIR);; esac
+	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR)$(PREFIX);; *.tar.*) $(untar) $< -C $(DESTDIR)$(PREFIX);; esac
 
 apps += openlogic_jdk21
 openlogic_jdk21_version := 21.0.10+7
@@ -112,48 +115,9 @@ $(openlogic_jdk21_package):
 	wget -c https://builds.openlogic.com/downloadJDK/openlogic-openjdk/$(openlogic_jdk21_version)/$@
 
 apps += openlogic_jdk21-install
+openlogic_jdk21-install: PREFIX ?= /openlogic_jdk21
 openlogic_jdk21-install: $(openlogic_jdk21_package)
-	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR);; *.tar.*) $(untar) $< -C $(DESTDIR);; esac
-
-
-# TruffleRuby https://github.com/oracle/truffleruby/releases
-apps += truffleruby
-truffleruby_version := 24.0.2
-truffleruby_package := truffleruby-$(truffleruby_version)-$(os)-$(arch)$(ext)
-truffleruby: $(truffleruby_package)
-$(truffleruby_package):
-	wget -c -O $@ https://github.com/oracle/truffleruby/releases/download/graal-$(truffleruby_version)/$(truffleruby_package)
-
-apps += truffleruby-install
-truffleruby_dir := $(DESTDIR)$(patsubst %.tar.gz,%,$(truffleruby_package))/
-truffleruby_bin := $(truffleruby_dir)bin/truffleruby
-truffleruby_ref := https://www.graalvm.org/latest/reference-manual/ruby/RubyManagers/#using-truffleruby-without-a-ruby-manager
-$(truffleruby_bin): $(truffleruby_package)
-	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR);; *.tar.*) $(untar) $< -C $(DESTDIR);; esac
-
-truffleruby_deps := $(truffleruby_dir)src/main/c/openssl/openssl.so $(truffleruby_dir)src/main/c/psych/psych.so
-$(truffleruby_deps):
-	distrib=$$(lsb_release -i | cut -f2); \
-	case "$$distrib" in \
-	    RedHatEnterpriseServer) repo='codeready-rebuilder*';; \
-	    CentOSStream) repo=powertools;; \
-	    *) repo='*';; \
-	esac; \
-	set -ex; for p in openssl-devel libyaml-devel zlib-devel gcc; do \
-	    rpm -q $$p &>/dev/null || sudo dnf -y install --enablerepo="$$repo" $$p; done;
-	cd $(truffleruby_dir) && lib/truffle/post_install_hook.sh
-	@test -z "$${GEM_HOME}" || echo -e "** Please unset environment variable \e[31mGEM_HOME\e[0m, see $(truffleruby_ref)"
-	@test -z "$${GEM_PATH}" || echo -e "** Please unset environment variable \e[31mGEM_PATH\e[0m, see $(truffleruby_ref)"
-
-truffleruby-install: pre_install $(truffleruby_bin) $(truffleruby_deps)
-
-
-# fpm for unpacking rpm files
-apps += fpm-install
-fpm := $(truffleruby_dir)/bin/fpm
-fpm-install: $(fpm)
-$(fpm): $(truffleruby_bin)
-	$(truffleruby_bin) -S gem install fpm
+	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR)$(PREFIX);; *.tar.*) $(untar) $< -C $(DESTDIR)$(PREFIX);; esac
 
 
 # Clojure
@@ -193,9 +157,9 @@ $(clj-kondo_package):
 	mv -f $@.swp $@
 
 apps += clj-kondo-install
-clj-kondo-install: DESTDIR = ~/bin
+clj-kondo-install: PREFIX ?= /clj-kondo
 clj-kondo-install: $(clj-kondo_package)
-	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR);; *.tar.*) $(untar) $< -C $(DESTDIR);; esac
+	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR)$(PREFIX);; *.tar.*) $(untar) $< -C $(DESTDIR)$(PREFIX);; esac
 
 
 # JRuby https://repo1.maven.org/maven2/org/jruby/jruby-dist/
@@ -209,8 +173,9 @@ $(jruby_package):
 
 # JRuby installation
 apps += jruby-install
+jruby-install: PREFIX ?= /jruby
 jruby-install: $(jruby_package)
-	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR);; *.tar.*) $(untar) $< -C $(DESTDIR);; esac
+	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR)$(PREFIX);; *.tar.*) $(untar) $< -C $(DESTDIR)$(PREFIX);; esac
 
 # JRuby-Complete
 apps += jruby_complete
@@ -224,30 +189,24 @@ $(jruby_complete_package):
 
 # JRuby_Complete installation
 apps += jruby_complete-install
-jruby_complete-install: ~/bin/$(jruby_complete_package)
-~/bin/$(jruby_complete_package): $(jruby_complete_package)
-	cp -f $< $@
+jruby_complete-install: PREFIX ?= /jruby-complete
+jruby_complete-install: $(jruby_complete_package)
+	install -m 755 -p -D $< $(DESTDIR)$(PREFIX)/bin/$<
 
 
 # Maven
 apps += maven
-maven_version := 3.9.12
+maven_version := 3.9.16
 maven_package := apache-maven-$(maven_version)-bin$(ext)
 maven: $(maven_package)
 $(maven_package):
 	wget -c https://dlcdn.apache.org/maven/maven-3/$(maven_version)/binaries/$@
 
 apps += maven-install
+maven-install: PREFIX ?= /maven
 maven-install: $(maven_package)
-	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR);; *.tar.*) $(untar) $< -C $(DESTDIR);; esac
-
-# Maven-package
-apps += maven-rpm
-maven_arch := noarch
-maven-rpm_file := apache-maven-$(maven_version).$(maven_arch).rpm
-maven-rpm_desc := Install maven from the RPM package
-maven-rpm: $(maven-rpm_file)
-	$(fpm) -s tar -t rpm -n apache-maven -a $(maven_arch) --prefix $(DESTDIR) $<
+	mkdir -p $(DESTDIR)$(PREFIX)
+	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR)$(PREFIX);; *.tar.*) $(untar) $< -C $(DESTDIR)$(PREFIX) --strip-components=1;; esac
 
 
 # Warbler
@@ -260,13 +219,15 @@ $(warbler_package):
 
 
 apps += warbler-install
+warbler-install: PREFIX ?= /warbler
 warbler-install: $(warbler_package)
-	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR);; *.tar.*) $(untar) $< -C $(DESTDIR);; esac
+	mkdir -p $(DESTDIR)$(PREFIX)
+	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR)$(PREFIX);; *.tar.*) $(untar) $< -C $(DESTDIR)$(PREFIX) --strip-components=1;; esac
 
 
 # TinyGo https://github.com/tinygo-org/tinygo/releases
 apps += tinygo
-tinygo_version := 0.39.0
+tinygo_version := 0.41.1
 tinygo_package := tinygo$(tinygo_version).$(os)-$(arch)$(ext)
 
 tinygo: $(tinygo_package)
@@ -275,10 +236,10 @@ $(tinygo_package):
 
 # TinyGo-install
 apps += tinygo-install
-tinygo-install: $(DESTDIR)/tinygo/lib/musl/COPYRIGHT
-$(DESTDIR)/tinygo/lib/musl/COPYRIGHT: $(tinygo_package)
-	mkdir -p $(DESTDIR)
-	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR);; *.tar.*) $(untar) $< -C $(DESTDIR) --skip-old-files;; esac
+tinygo-install: PREFIX ?= /tinygo
+tinygo-install: $(tinygo_package)
+	mkdir -p $(DESTDIR)$(PREFIX)
+	$(untar) $< -C $(DESTDIR)$(PREFIX) --strip-components=1
 
 
 # Golang https://go.dev/dl/
@@ -291,14 +252,10 @@ $(golang_package):
 	wget -c -O $@ https://go.dev/dl/$@
 
 apps += golang-install
-golang-install: $(DESTDIR)/golang/go$(golang_version)/root/VERSION
-$(DESTDIR)/golang/go$(golang_version)/root/VERSION: $(golang_package)
-	mkdir -p $(DESTDIR)/golang/go$(golang_version)
-	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR)/golang;; *.tar.*) $(untar) $< -C $(DESTDIR)/golang;; esac
-	mv $(DESTDIR)/golang/go $(DESTDIR)/golang/go$(golang_version)/root
-	ln -snf golang/go$(golang_version)/root $(DESTDIR)/goroot
-	mkdir -p $(DESTDIR)/golang/go$(golang_version)/path
-	ln -snf golang/go$(golang_version)/path $(DESTDIR)/gopath
+golang-install: PREFIX ?= /golang
+golang-install: $(golang_package)
+	mkdir -p $(DESTDIR)$(PREFIX)
+	$(untar) $< -C $(DESTDIR)$(PREFIX) --strip-components=1
 
 
 # Graalvm https://www.oracle.com/java/technologies/downloads/#graalvmjava23-windows
@@ -312,57 +269,54 @@ $(graalvm_package):
 
 
 apps += graalvm-install
-ifdef MSYSTEM
 graalvm-install: vswhere='/c/Program Files (x86)/Microsoft Visual Studio/Installer/vswhere.exe'
+graalvm-install: PREFIX ?= /graalvm
 graalvm-install: $(graalvm_package)
-	unzip $< -d ~/app/
+	mkdir -p $(DESTDIR)$(PREFIX)
+	$(untar) $< -C $(DESTDIR)$(PREFIX) --strip-components=1
+ifdef MSYSTEM
 	if [[ -x "$(vswhere)" ]]; then \
 	  instdir="`$(vswhere) -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`"; \
 	  if [[ $$instdir ]]; then \
-	    (echo -e '2\ni'; echo -E "call \"$$instdir\VC\Auxiliary\Build\vcvars64.bat\""; echo -e '.\nw!\nq') | ex  ~/app/graalvm-jdk-$(graalvm_version)*/bin/native-image.cmd; \
+	    (echo -e '2\ni'; echo -E "call \"$$instdir\VC\Auxiliary\Build\vcvars64.bat\""; echo -e '.\nw!\nq') | ex $(DESTDIR)$(PREFIX)/bin/native-image.cmd; \
 	  fi; \
 	fi
-else
-graalvm-install: $(graalvm_package)
-	mkdir -p $(DESTDIR)
-	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR);; *.tar.*) $(untar) $< -C $(DESTDIR) --skip-old-files;; esac
 endif
-
-# Graalvm-package
-apps += graalvm-rpm
-graalvm_arch := x86_64
-graalvm_rpm := apache-graalvm-$(graalvm_version).$(graalvm_arch).rpm
-graalvm-rpm: $(graalvm_rpm)
-$(graalvm_rpm): $(graalvm_package) $(fpm)
-	$(fpm) -s tar -t rpm -n graalvm-jdk -a $(graalvm_arch) --prefix $(DESTDIR) $<
 
 
 # leiningen
 apps += leiningen
 leiningen_version := stable
 leiningen_desc := For automating Clojure projects without setting your hair on fire
-leiningen: lein.zip
-lein.zip:
+leiningen: lein.tar
+lein.tar:
 	wget -c https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein
 	chmod +x lein
-	zip --move --test $@ lein
-
+	bsdtar -cf $@ -s ",^,bin/," lein
+	rm -f lein
 
 apps += leiningen-install
-leiningen-install: DESTDIR := ~/bin
-leiningen-install: lein.zip
-	mkdir -p $(DESTDIR)
-	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR);; *.tar.*) $(untar) $< -C $(DESTDIR) --skip-old-files;; esac
+leiningen-install: PREFIX ?= /leiningen
+leiningen-install: lein.tar
+	mkdir -p $(DESTDIR)$(PREFIX)
+	$(untar) $< -C $(DESTDIR)$(PREFIX)
 
 
 # Bitwarden Cli
 apps += bitwarden
-bitwarden: bw
-bw: bw$(ext)
-	case "$<" in *.zip) $(unzip) $<;; *.tar.*) $(untar) $<;; esac
+bitwarden_version := latest
+bitwarden_desc := The most trusted password manager
+bw_package := bw.zip
 
-bw$(ext):
-	wget -c -O $@ 'https://vault.bitwarden.com/download/?app=cli&platform=$(ow)'
+bitwarden: $(bw_package)
+$(bw_package):
+	wget -c -O $@ 'https://vault.bitwarden.com/download/?app=cli&platform=$(os)'
+
+apps += bitwarden-install
+bitwarden-install: PREFIX ?= /bitwarden
+bitwarden-install: $(bw_package)
+	mkdir -p $(DESTDIR)$(PREFIX)
+	$(untar) $< -C $(DESTDIR)$(PREFIX) -s ",^,bin/,"
 
 
 # Babashka https://github.com/babashka/babashka/releases
@@ -380,15 +334,13 @@ $(babashka_package):
 	wget -c -O $@ https://github.com/babashka/babashka/releases/download/v$(babashka_version)/$(babashka_package)
 
 apps += babashka-install
-ifeq ($(wildcard ~/bin/.),)
-babashka_bindir := $(DESTDIR)babashka-$(babashka_version)/bin
-else
-babashka_bindir := ~/bin
-endif
+babashka-install: PREFIX ?= /babashka
 babashka-install: $(babashka_package)
-	mkdir -p $(babashka_bindir)
-	case "$<" in *.zip) $(unzip) $< -d $(babashka_bindir);; *.tar.*) $(untar) $< -C $(babashka_bindir);; esac
+	mkdir -p $(DESTDIR)$(PREFIX)
+	$(untar) $< -C $(DESTDIR)$(PREFIX) -s ',^,bin/,'
 
+
+ifeq ($(os), windows)
 # Emacs https://www.gnu.org/software/emacs/download.html
 apps += emacs
 emacs_version := 30.1
@@ -399,99 +351,17 @@ $(emacs_package):
 	wget -c -O $@ https://ftp.gnu.org/gnu/emacs/windows/emacs-$(firstword $(subst ., ,$(emacs_version)))/${emacs_package}
 
 apps += emacs-install
+emacs-install: PREFIX ?= /emacs
 emacs-install: $(emacs_package)
-	unzip $< -d $(DESTDIR)/emacs/
-
-
-# JASSPA MicroEmacs
-apps += jasspa2009
-jasspa2009_version := latest
-jasspa2009_package := jasspa-mesrc-$(jasspa2009_version).zip
-jasspa2009: $(jasspa2009_package)
-$(jasspa2009_package):
-	wget -c -O $@ https://github.com/mittelmark/microemacs/archive/refs/heads/master.zip
-
-apps += jasspa2009-install
-ifeq ($(wildcard ~/bin/.),)
-jasspa2009_bindir := $(DESTDIR)jasspa-$(babashka_version)/bin
-else
-jasspa2009_bindir := ~/bin
+	mkdir -p $(DESTDIR)$(PREFIX)
+	$(untar) $< -C $(DESTDIR)$(PREFIX)
 endif
-jasspa2009-install: $(jasspa2009_bindir)/mec2009$(exe)
-$(jasspa2009_bindir)/mec2009$(exe): builddir := $(shell mktemp -d --tmpdir jasspa-XXXXXX)
-$(jasspa2009_bindir)/mec2009$(exe): $(jasspa2009_package)
-	rm -rf $(builddir)/*
-	$(unzip) -q $(jasspa2009_package) -d $(builddir)
-	cd $(builddir)/microemacs-master/bfs && CC=gcc $(MAKE) && install -v -m 755 -s bfs$(exe) $(@D)
-ifdef MSYSTEM
-	cd $(builddir)/microemacs-master/src && ./build -t c -m cygwin.gmk -D CONSOLE_LIBS=-lcurses
-else
-	cd $(builddir)/microemacs-master/src && /bin/make -f linux32gcc.gmk BTYP=c
-endif
-	cd $(builddir)/microemacs-master/src && find . -type f -name mec$(exe) -exec install -v -m 755 -s {} $@ \;
-	cd $(builddir)/microemacs-master && bfs/bfs$(exe) -o $(@D)/mesc2009$(exe) -a $@ jasspa
-	-rm -rf $(builddir)
-
-
-# JASSPA MicroEmacs from github
-apps += jasspa
-jasspa_version := 20251101
-jasspa_package_bundle := Jasspa_MicroEmacs_$(jasspa_version)_packages.zip
-jasspa_package_url := https://github.com/bjasspa/jasspa/releases/download/me_$(jasspa_version)/
-jasspa_package := me_$(jasspa_version).tar.gz
-
-jasspa: $(jasspa_package_bundle) $(jasspa_package)
-$(jasspa_package_bundle):
-	wget -c -O $@ $(jasspa_package_url)Jasspa_MicroEmacs_Latest_packages.zip
-$(jasspa_package):
-	wget -c -O $@ https://github.com/bjasspa/jasspa/archive/refs/tags/$@
-
-apps += jasspa-install
-ifeq ($(wildcard ~/bin/.),)
-jasspa_bindir := $(DESTDIR)jasspa-$(jasspa_version)/bin
-else
-jasspa_bindir := ~/bin
-endif
-
-jasspa-install: $(jasspa_bindir)/mec$(exe)| pre_install
-$(jasspa_bindir)/mec$(exe): builddir := $(shell mktemp -d --tmpdir jasspa-XXXXXXX)
-$(jasspa_bindir)/mec$(exe): $(jasspa_package)
-	-rm -rf $(builddir)/*
-	$(untar) $(jasspa_package) -C $(builddir) --strip-components=2 --wildcards '*/microemacs'
-	cd $(builddir) && rm -f bin/*
-	cd $(builddir)/src && ./build.sh -t c
-	find $(builddir)/bin -type f -perm 755 |xargs cp -v -t $(jasspa_bindir)/
-	-rm -rf $(builddir)
-
-apps += jasspa-install-bfs
-jasspa-install-bfs_version := v09.12.25.beta2
-jasspa-install-bfs_package := jasspa-$(jasspa-install-bfs_version).zip
-jasspa-install-bfs_package_url := https://github.com/mittelmark/microemacs/archive/refs/tags/$(jasspa-install-bfs_version).zip
-
-$(jasspa-install-bfs_package):
-	wget -c -O $@ $(jasspa-install-bfs_package_url)
-
-jasspa-install-bfs: builddir := $(shell mktemp -d --tmpdir jasspa-XXXXXXX)
-jasspa-install-bfs: $(jasspa_package_bundle) $(jasspa_bindir)/mec$(exe) $(jasspa-install-bfs_package)
-	-rm -rf $(builddir)/*
-	$(unzip) -q $(jasspa-install-bfs_package) -d $(builddir)
-	cd $(builddir)/microemacs-*/bfs && $(MAKE) && cp -v bfs$(exe) $(jasspa_bindir)
-	$(unzip) -q $(jasspa_package_bundle) -d $(builddir)
-	cd $(jasspa_bindir) && ./bfs -a mec$(exe) -o mesc$(exe) $(builddir)/packages/Jasspa_MicroEmacs_$(jasspa_version)_macros.tfs
-	-rm -rf $(builddir)
-
-
-apps += phcl-microemacs
-phcl-microemacs_pkg := $(patsubst %,phcl-microemacs/%, MicroEmacs-4.21-0.0.src.rpm MicroEmacs-4.21-0.0.x86_64.rpm)
-phcl-microemacs: $(phcl-microemacs_pkg)
-$(phcl-microemacs_pkg):
-	mkdir -p $(@D)
-	rsync -Pt rsync://www.phcomp.co.uk/downloads/centos9-x86_64/phcl/$(@F) $(@D)/
 
 
 ## Raku, Perl 6.
 apps += rakudo
 rakudo_version := 2026.05-01
+rakudo_desc := Perl 6
 ifneq ($(MSYSTEM),)
 rakudo_package := rakudo-moar-$(rakudo_version)-win-x86_64-msvc.zip
 else
@@ -504,56 +374,36 @@ $(rakudo_package):
 	wget -c -O $@ https://rakudo.org/dl/rakudo/$(rakudo_package)
 
 apps += rakudo-install
+rakudo-install: PREFIX ?= /rakudo
 rakudo-install: $(rakudo_package)
-	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR);; *.tar.*) $(untar) $< -C $(DESTDIR);; esac
-
-
-# chruby https://github.com/postmodern/chruby/releases
-apps += chruby
-chruby_version := 0.3.9
-chruby_package := chruby-$(chruby_version).tar.gz
-chruby: $(chruby_package)
-$(chruby_package):
-	wget -c -O $@ https://github.com/postmodern/chruby/releases/download/v$(chruby_version)/$(chruby_package)
-
-apps += chruby-install
-chruby-install: $(chruby_package)
-	$(untar) $(chruby_package)
-	$(MAKE) -C chruby-$(chruby_version) install PREFIX=$(DESTDIR)/chruby-$(chruby_version)
-	-rm -f ~/.bashrc.d/chruby
-	echo "# This file is generated automatically, DO NOT EDIT!" > ~/.bashrc.d/chruby
-	echo "source $(DESTDIR)/chruby-$(chruby_version)/share/chruby/chruby.sh" >> ~/.bashrc.d/chruby
-	echo "source $(DESTDIR)/chruby-$(chruby_version)/share/chruby/auto.sh" >> ~/.bashrc.d/chruby
-
-
-# ruby-install, ruby installer https://github.com/postmodern/ruby-install/releases
-apps += ruby-installer
-ruby-installer_version := 0.9.3
-ruby-installer_package := ruby-install-$(ruby-installer_version).tar.gz
-ruby-installer: $(ruby-installer_package)
-$(ruby-installer_package):
-	wget -c -O $@ https://github.com/postmodern/ruby-install/releases/download/v$(ruby-installer_version)/$(ruby-installer_package)
-
-ruby-installer-install: $(ruby-installer_package)
-	$(untar) $(ruby-installer_package)
-	$(MAKE) -C ruby-install-$(ruby-installer_version) install PREFIX=$(DESTDIR)/ruby-install-$(ruby-installer_version)
+	mkdir -p $(DESTDIR)$(PREFIX)
+	$(untar) $< -C $(DESTDIR)$(PREFIX) --strip-components=1
 
 
 ifeq ($(uname_os), Msys)
 # The source file create-short.c is from git-sdk library
 # https://github.com/git-for-windows/build-extra
 apps += create-shortcut
-create-shortcut: create-shortcut.exe
-create-shortcut.exe: create-shortcut.c
-	/ucrt64/bin/gcc -o $@ $^ -luuid -lole32
-
+create-shortcut_desc := Create shortcut from command line
+create-shortcut: create-shortcut.tar
 create-shortcut.c:
 	wget https://raw.githubusercontent.com/git-for-windows/build-extra/main/git-extra/$@
+create-shortcut.exe: create-shortcut.c
+	/ucrt64/bin/gcc -o $@ $^ -luuid -lole32
+create-shortcut.tar: create-shortcut.exe
+	$(tar) -cf $@ -s ',^,bin/,' $^
+
+apps += create-shortcut-install
+create-shortcut-install: PREFIX ?= /bin
+create-shortcut-install: create-shortcut.tar
+	mkdir -p $(DESTDIR)$(PREFIX)
+	$(untar) $< -C $(DESTDIR)$(PREFIX)
 endif
 
 
 apps += github_cli
 github_cli_version := 2.87.3
+github_cli_desc := GitHub CLI
 ifeq ($(uname_os), Msys)
 github_cli_package := gh_$(github_cli_version)_windows_$(arch).zip
 else
@@ -565,9 +415,10 @@ $(github_cli_package):
 	wget -c -O $@ https://github.com/cli/cli/releases/download/v$(github_cli_version)/$(github_cli_package)
 
 apps += github_cli-install
-github_cli-install: DESTDIR := $(DESTDIR)/github
+github_cli-install: PREFIX ?= /github_cli
 github_cli-install: $(github_cli_package)
-	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR);; *.tar.*) $(untar) $< -C $(DESTDIR);; esac
+	mkdir -p $(DESTDIR)$(PREFIX)
+	$(untar) $< -C $(DESTDIR)$(PREFIX) --strip-components=1
 
 
 apps += aichat
@@ -584,9 +435,11 @@ $(aichat_package):
 	wget -c -O $@ https://github.com/sigoden/aichat/releases/download/$(aichat_version)/$(aichat_package)
 
 apps += aichat-install
-aichat-install: DESTDIR = ~/bin
+aichat-install: PREFIX ?= /aichat
 aichat-install: $(aichat_package)
-	case "$<" in *.zip) $(unzip) $< -d $(DESTDIR);; *.tar.*) $(untar) $< -C $(DESTDIR);; esac
+	mkdir -p $(DESTDIR)$(PREFIX)
+	$(untar) $< -C $(DESTDIR)$(PREFIX) -s ',^,bin/,'
+
 
 apps += just
 just_version := 1.42.4
@@ -601,9 +454,11 @@ $(just_package):
 	wget -c -O $@ https://github.com/casey/just/releases/download/$(just_version)/$(just_package)
 
 apps += just-install
-just-install: DESTDIR = ~/bin
+just-install: PREFIX ?= /just
 just-install: $(just_package)
-	case "$<" in *.zip) $(unzip) -j -d $(DESTDIR) $< just$(exe);; *.tar.*) $(untar) $< -C $(DESTDIR) just$(exe);; esac
+	mkdir -p $(DESTDIR)$(PREFIX)
+	$(untar) $< -C $(DESTDIR)$(PREFIX) -s ',^just.*,bin/~,'
+
 
 ifdef MSYSTEM
 apps += jellyfin-ffmpeg
@@ -616,9 +471,10 @@ $(ffmpeg_package):
 	mv -f $@.swp $@
 
 apps += jellyfin-ffmpeg-install
-jellyfin-ffmpeg-install: DESTDIR = ~/bin
+jellyfin-ffmpeg-install: PREFIX = ~/jellyfin
 jellyfin-ffmpeg-install: $(ffmpeg_package)
-	case "$<" in *.zip) $(unzip) -j -d $(DESTDIR) $< \*$(exe);; *.tar.*) $(untar) $< -C $(DESTDIR) \*$(exe);; esac
+	mkdir -p $(DESTDIR)$(PREFIX)
+	$(untar) $< -C $(DESTDIR)$(PREFIX) -s ',^,bin/,' '*.exe'
 endif
 
 
@@ -673,8 +529,9 @@ venice-standalone-$(venice_version).jar: venice-standalone-pom.xml.m4
 	-rm -rf $(wd)
 
 apps += venice-standalone-install
+venice-standalone-install: PREFIX ?= /venice
 venice-standalone-install: venice-standalone
-	cp -vf venice-standalone-$(venice_version).jar $(DESTDIR)/bin
+	install -D venice-standalone-$(venice_version).jar $(DESTDIR)$(PREFIX)/bin/venice-standalone.jar
 
 apps += mg
 mg_desc = OpenBSD Mg editor.
@@ -687,11 +544,12 @@ $(mg_package):
 apps += mg-install
 mg-install: t := $(shell mktemp -d)
 mg-install: w := $t/$(basename $(mg_package))
+mg-install: PREFIX ?= /mg
 mg-install: $(mg_package)
 	unzip $(mg_package) -d $t
 	cd $w && ./autogen.sh
-	cd $w && ./configure --without-curses --prefix $(DESTDIR)/mg LDFLAGS=-static
-	cd $w && $(MAKE) install clean
+	cd $w && ./configure --without-curses --prefix $(PREFIX) LDFLAGS=-static
+	cd $w && $(MAKE) DESTDIR=$(DESTDIR) install clean
 	rm -rf $t
 
 ifdef MSYSTEM
@@ -704,12 +562,13 @@ $(clisp_package):
 	wget -c -O $@ "https://master.dl.sourceforge.net/project/clisp/clisp/$(clisp_version)/$@?viasf=1"
 
 apps += clisp-install
+clisp-install: PREFIX ?= /clisp
 clisp-install: $(clisp_package)
-	case "$<" in *.zip) $(unzip) -d $(DESTDIR) $<;; *.tar.*) $(untar) $< -C $(DESTDIR);; esac
-	mkdir -p $(DESTDIR)/clisp-$(clisp_version)/bin
-	echo -e '#!/bin/sh\n_t=$$(dirname $$(dirname $$(readlink -f "$$0")))\nexec $$_t/$$(basename "$$0") "$$@"' > $(DESTDIR)/clisp-$(clisp_version)/bin/clisp
-	cp -f $(DESTDIR)/clisp-$(clisp_version)/bin/clisp $(DESTDIR)/clisp-$(clisp_version)/bin/clisp-link
-	chmod +x -R $(DESTDIR)/clisp-$(clisp_version)/bin
+	mkdir -p $(DESTDIR)$(PREFIX)/bin
+	$(untar) $< -C $(DESTDIR)$(PREFIX)
+	echo -e '#!/bin/sh\n_t=$$(dirname $$(dirname $$(readlink -f "$$0")))\nexec $$_t/$$(basename "$$0") "$$@"' > $(DESTDIR)$(PREFIX)/bin/clisp
+	cp -f $(DESTDIR)$(PREFIX)/bin/clisp $(DESTDIR)$(PREFIX)/bin/clisp-link
+	chmod +x -R $(DESTDIR)$(PREFIX)/bin
 endif
 
 ifndef MSYSTEM
@@ -734,9 +593,10 @@ $(schemesh_builddir)/schemesh: $(schemesh_package)
 $(schemesh_package):
 	wget -c -O $@ "https://github.com/cosmos72/schemesh/archive/refs/tags/$(schemesh_version).tar.gz"
 
+schemesh-install: PREFIX ?= /schemesh
 schemesh-install: $(schemesh_builddir)/schemesh
-	cd $(schemesh_builddir) && $(MAKE) install prefix=$(DESTDIR)
-	$(DESTDIR)/bin/schemesh -e 1
+	cd $(schemesh_builddir) && $(MAKE) install DESTDIR=$(DESTDIR) prefix=$(PREFIX)
+	$(DESTDIR)$(PREFIX)/bin/schemesh -e 1
 	-rm -rf $(schemesh_builddir)
 endif
 
@@ -751,38 +611,39 @@ $(closh_package):
 
 
 apps += closh-install
-closh-install: DESTDIR = ~
+closh-install: PREFIX = /closh
 closh-install: $(closh_package)
-	install -D -t $(DESTDIR)/bin $<
-	echo -e '#!/usr/bin/sh\nexec java -jar $(DESTDIR)/bin/$< "$$@"' > $(DESTDIR)/bin/closh
-	chmod +x $(DESTDIR)/bin/closh
+	install -D -t $(DESTDIR)$(PREFIX)/bin $<
+	echo -e '#!/usr/bin/sh\nexec java -jar $(DESTDIR)$(PREFIX)/bin/$< "$$@"' > $(DESTDIR)$(PREFIX)/bin/closh
+	chmod +x $(DESTDIR)$(PREFIX)/bin/closh
 
 
 apps += gopass
 gopass_desc = The slightly more awesome standard unix password manager for teams
 gopass_version = 1.16.1
-gopass_package = gopass-$(gopass_version)-$(os)-amd64.zip
+gopass_package = gopass-$(gopass_version)-$(os)-amd64$(ext)
 gopass: $(gopass_package)
 $(gopass_package):
 	wget -c -O $@ "https://github.com/gopasspw/gopass/releases/download/v$(gopass_version)/$(gopass_package)"
 
-gopass-install: DESTDIR := $(DESTDIR)/gopass/bin
+gopass-install: PREFIX ?= /gopass
 gopass-install: $(gopass_package)
-	mkdir -p $(DESTDIR)
-	case "$<" in *.zip) $(unzip) -d $(DESTDIR) $<;; *.tar.*) $(untar) $< -C $(DESTDIR);; esac
+	mkdir -p $(DESTDIR)$(PREFIX)
+	$(untar) $< -C $(DESTDIR)$(PREFIX) -s  ',^gopass,bin/~,'
 
 apps += git-credential-gopass
-git-credential-gopass_desc = Gopass git-credentials helper
-git-credential-gopass_version = 1.16.1
-git-credential-gopass_package = git-credential-gopass-$(git-credential-gopass_version)-$(os)-amd64.zip
+git-credential-gopass_desc := Gopass git-credentials helper
+git-credential-gopass_version := 1.16.1
+git-credential-gopass_package := git-credential-gopass-$(git-credential-gopass_version)-$(os)-amd64$(ext)
+
 git-credential-gopass: $(git-credential-gopass_package)
 $(git-credential-gopass_package):
 	wget -c -O $@ "https://github.com/gopasspw/git-credential-gopass/releases/download/v$(git-credential-gopass_version)/$(git-credential-gopass_package)"
 
-git-credential-gopass-install: DESTDIR := $(DESTDIR)/gopass/bin
+git-credential-gopass-install: PREFIX ?= /git-credential-gopass
 git-credential-gopass-install: $(git-credential-gopass_package)
-	mkdir -p $(DESTDIR)
-	case "$<" in *.zip) $(unzip) -d $(DESTDIR) $<;; *.tar.*) $(untar) $< -C $(DESTDIR);; esac
+	mkdir -p $(DESTDIR)$(PREFIX)
+	$(untar) $< -C $(DESTDIR)$(PREFIX) -s ',^git.*,bin/~,'
 
 ## Add more here.
 
