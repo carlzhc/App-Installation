@@ -460,6 +460,25 @@ just-install: $(just_package)
 	$(untar) $< -C $(DESTDIR)$(PREFIX) -s ',^just.*,bin/~,'
 
 
+apps += argc
+argc_version := v1.24.0
+argc_desc := A command-line argument parser and runner
+ifeq ($(uname_os), Msys)
+argc_package := argc-$(argc_version)-x86_64-pc-windows-msvc.zip
+else
+argc_package := argc-$(argc_version)-x86_64-unknown-linux-musl.tar.gz
+endif
+
+argc: $(argc_package)
+$(argc_package):
+	wget -c -O $@ https://github.com/sigoden/argc/releases/download/$(argc_version)/$(argc_package)
+
+apps += argc-install
+argc-install: PREFIX ?= /argc
+argc-install: $(argc_package)
+	mkdir -p $(DESTDIR)$(PREFIX)
+	$(untar) $< -C $(DESTDIR)$(PREFIX) -s ',^,bin/,'
+
 ifdef MSYSTEM
 apps += jellyfin-ffmpeg
 ffmpeg_version := 7.1.2-1
