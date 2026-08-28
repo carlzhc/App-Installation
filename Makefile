@@ -44,6 +44,28 @@ ifeq ($(arch), x86_64)
 arch := amd64
 endif
 
+
+# need to define target variable 'bin' for untar-install* macro, call it with app name.
+# for no topdir archives, add leading '/', then strip it for easier filename matching.
+define untar-install =
+	mkdir -p $(DESTDIR)$(PREFIX)
+	$(untar) $< -C $(DESTDIR)$(PREFIX)  --strip-components=1 \
+	-s ',^\($(bin)\)$$,/bin/~,p' \
+	-s ',.*\($(bin)\)\.\([0-9]\(\.gz\)\?\)$$,/share/man/man\2/\1.\2,p' \
+	-s ',^doc/,/share/doc/$1/,p' \
+	-s ',^[^/],/share/$1/~,p'
+endef
+
+# strip topdir
+define untar-install-1 =
+	mkdir -p $(DESTDIR)$(PREFIX)
+	$(untar) $< -C $(DESTDIR)$(PREFIX) --strip-components=1 \
+	-s ',^[^/]\+/\($(bin)\)$$,/bin/\1,p' \
+	-s ',.*\($(bin)\)\.\([0-9]\(\.gz\)\?\)$$,/share/man/man\2/\1.\2,p' \
+	-s ',^[^/]\+/doc/,/share/doc/$1/,p' \
+	-s ',^[^/]\+/,/share/$1/,p'
+endef
+
 # --- Start here -----------------
 all: $(apps)
 
@@ -455,9 +477,9 @@ $(just_package):
 
 apps += just-install
 just-install: PREFIX ?= /just
+just-install: bin := just
 just-install: $(just_package)
-	mkdir -p $(DESTDIR)$(PREFIX)
-	$(untar) $< -C $(DESTDIR)$(PREFIX) -s ',^just.*,bin/~,'
+	$(call untar-install,$(subst -install,,$@))
 
 
 apps += argc
@@ -478,6 +500,49 @@ argc-install: PREFIX ?= /argc
 argc-install: $(argc_package)
 	mkdir -p $(DESTDIR)$(PREFIX)
 	$(untar) $< -C $(DESTDIR)$(PREFIX) -s ',^,bin/,'
+
+
+# fd https://github.com/sharkdp/fd/releases
+apps += fd
+fd_version := 10.5.0
+fd_desc := A simple, fast and user-friendly alternative to 'find'
+ifeq ($(uname_os), Msys)
+fd_package := fd-v$(fd_version)-x86_64-pc-windows-msvc.zip
+else
+fd_package := fd-v$(fd_version)-x86_64-unknown-linux-musl.tar.gz
+endif
+
+fd: $(fd_package)
+$(fd_package):
+	wget -c -O $@ https://github.com/sharkdp/fd/releases/download/v$(fd_version)/$(fd_package)
+
+apps += fd-install
+fd-install: PREFIX ?= /fd
+fd-install: bin ?= fd$(exe)
+fd-install: $(fd_package)
+	$(call untar-install-1,$(subst -install,,$@))
+
+
+# rg (ripgrep) https://github.com/BurntSushi/ripgrep/releases
+apps += rg
+rg_version := 15.2.0
+rg_desc := A line-oriented search tool that recursively searches directories for a regex pattern
+ifeq ($(uname_os), Msys)
+rg_package := ripgrep-$(rg_version)-x86_64-pc-windows-msvc.zip
+else
+rg_package := ripgrep-$(rg_version)-x86_64-unknown-linux-musl.tar.gz
+endif
+
+rg: $(rg_package)
+$(rg_package):
+	wget -c -O $@ https://github.com/BurntSushi/ripgrep/releases/download/$(rg_version)/$(rg_package)
+
+apps += rg-install
+rg-install: PREFIX ?= /rg
+rg-install: bin = rg$(exe)
+rg-install: $(rg_package)
+	$(call untar-install-1,$(subst -install,,$@))
+
 
 ifdef MSYSTEM
 apps += jellyfin-ffmpeg
